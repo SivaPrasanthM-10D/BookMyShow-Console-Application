@@ -174,7 +174,7 @@
                 }
             }
 
-            public static void ViewAndRemoveReview()
+            public static void RemoveReview()
             {
                 if (Reviews.Count == 0)
                 {
@@ -507,7 +507,9 @@
                     Console.WriteLine("\t\t\t\t\t\t\t\t    1. Add Theatre");
                     Console.WriteLine("\t\t\t\t\t\t\t\t    2. Add Movie");
                     Console.WriteLine("\t\t\t\t\t\t\t\t    3. Add Show");
-                    Console.WriteLine("\t\t\t\t\t\t\t\t    4. Logout");
+                    Console.WriteLine("\t\t\t\t\t\t\t\t    4. View Reviews");
+                    Console.WriteLine("\t\t\t\t\t\t\t\t    5. Remove Reviews");
+                    Console.WriteLine("\t\t\t\t\t\t\t\t    6. Logout");
                     Console.Write("\t\t\t\t\t\t\t\t    Enter your choice:");
 
                     switch (Console.ReadLine())
@@ -548,6 +550,12 @@
                             AdminOperations.AddShow(stname, ssno, stitle, stime, savlseats, tktprice);
                             break;
                         case "4":
+                            ReviewSystem.ViewReview();
+                            break;
+                        case "5":
+                            ReviewSystem.RemoveReview();
+                            break;
+                        case "6":
                             Console.WriteLine("Logging out!");
                             return;
                         default:
