@@ -1,4 +1,6 @@
-﻿namespace BookMyShow
+﻿using System.Text.RegularExpressions;
+
+namespace BookMyShow
 {
     public abstract class User
     {
@@ -38,7 +40,11 @@
         }
     }
 
-    public class Ticket
+    public interface ITicket
+    {
+        void DisplayTicket();
+    }
+    public class Ticket : ITicket
     {
         public string MovieName;
         public string ShowTime;
@@ -128,23 +134,25 @@
 
         public class MovieReview
         {
+            public string CustomerName;
             public string MovieTitle;
             public int Rating;
             public string Review;
 
-            public MovieReview(string movieTitle, int rating, string review)
+            public MovieReview(string name, string movieTitle, int rating, string review)
             {
+                CustomerName = name;
                 MovieTitle = movieTitle;
                 Rating = rating;
                 Review = review;
             }
         }
 
-        public static class ReviewSystem
+        public class ReviewSystem
         {
             private static List<MovieReview> Reviews = new List<MovieReview>();
 
-            public static void AddReview()
+            public static void AddReview(Customer customer)
             {
                 Console.Write("Enter movie name:");
                 string moviename = Console.ReadLine();
@@ -156,7 +164,7 @@
                 }
                 Console.Write("Enter your review:");
                 string review = Console.ReadLine();
-                Reviews.Add(new MovieReview(moviename, rating, review));
+                Reviews.Add(new MovieReview(customer.Name, moviename, rating, review));
                 Console.WriteLine("Thank you for your review!");
             }
 
@@ -169,6 +177,7 @@
                 }
                 foreach (var review in Reviews)
                 {
+                    Console.WriteLine($"\n{review.CustomerName}:");
                     Console.WriteLine($"\n{review.MovieTitle} - {review.Rating}/5");
                     Console.WriteLine($"{review.Review}");
                 }
@@ -181,17 +190,17 @@
                     Console.WriteLine("No reviews found.");
                     return;
                 }
-                for(int i = 0; i < Reviews.Count; i++)
+                for (int i = 0; i < Reviews.Count; i++)
                 {
-                    Console.WriteLine($"{i+1}. {Reviews[i].MovieTitle} - {Reviews[i].Rating}/5\nReview: {Reviews[i].Review}\n");
+                    Console.WriteLine($"{i + 1}. {Reviews[i].CustomerName}\n{Reviews[i].MovieTitle} - {Reviews[i].Rating}/5\n{Reviews[i].Review}\n");
                 }
                 Console.Write("Enter the review number to remove:");
-                if(!int.TryParse(Console.ReadLine(), out int revno) || revno < 1 || revno > Reviews.Count)
+                if (!int.TryParse(Console.ReadLine(), out int revno) || revno < 1 || revno > Reviews.Count)
                 {
                     Console.WriteLine("Invalid review number. Try again.");
                     return;
                 }
-                Reviews.RemoveAt(revno-1);
+                Reviews.RemoveAt(revno - 1);
                 Console.WriteLine("Review removed successfully!");
             }
         }
@@ -200,30 +209,31 @@
         {
             public static void DisplaySeats(Show show)
             {
-                Console.WriteLine("\nSeat Layout:");
-                Console.WriteLine("=====================================");
+                Console.WriteLine("\n        Seat Layout:");
+                Console.WriteLine("        =====================================");
                 Console.WriteLine("\n        _________________________________");
                 Console.WriteLine("       /                                 \\");
                 Console.WriteLine();
 
                 int totalseats = show.AvailableSeats + show.BookSeats.Count;
-                for (int i = 1; i <= totalseats; i++)
+                for (int seat = 1; seat <= totalseats; seat++)
                 {
-                    if (show.BookSeats.Contains(i))
+                    string seatNumber = seat.ToString();
+                    seatNumber = seat < 10 ? "00" + seat : (seat < 100 ? "0" + seat : seat.ToString());
+                    if (show.BookSeats.Contains(seat))
                     {
-                        Console.Write("[X]");
+                        Console.Write("[ X ]");
                     }
                     else
                     {
-                        Console.Write($"[{i}]");
+                        Console.Write($"[{seatNumber}]");
                     }
-                    if (i % 10 == 0)
-                    {
-                        Console.WriteLine();
-                    }
+                    if (seat % 10 == 0) Console.WriteLine();
                 }
-                Console.WriteLine("=====================================\n");
+
+                Console.WriteLine("        =====================================\n");
             }
+
 
             public static double ApplyDiscount(double totalprice, int seatcount)
             {
@@ -257,6 +267,51 @@
                 return finprice;
             }
 
+            public static bool PaymentGateway(Customer customer, Show show, List<int> seatNumbers, double totalprice)
+            {
+                int retry = 3;
+            x:
+                Console.WriteLine("\t\t\t\t\t\t\t\t PAYMENT GATEWAY");
+                Console.WriteLine($"\n\nInitiating payment from UPI ID: {customer.UpiId}");
+                Console.Write("Enter your 6-digit UPI Pin:");
+                
+                if (!int.TryParse(Console.ReadLine(), out int upipin) || upipin < 100000 || upipin > 999999)
+                {
+                    
+                    retry--;
+                    if (retry == 0)
+                    {
+                        Console.WriteLine("\n\nEntered wrong pin too many times. Payment failed.");
+                        return false;
+                    }
+                    else 
+                    {
+                        Console.WriteLine("\n\nInvalid UPI Pin format. Enter correct PIN.");
+                        goto x;
+                    }
+                }
+                if (upipin == customer.UpiPin)
+                {
+                    show.AvailableSeats -= seatNumbers.Count;
+                    show.BookSeats.AddRange(seatNumbers);
+                    var ticket = new Ticket(show.Movie.Title, show.ShowTime, seatNumbers, show.Theatre.Name, totalprice);
+                    customer.BookedTickets.Add(ticket);
+                    Console.WriteLine("\n\nPayment Successful! Your ticket(s) have been booked.");
+                    ticket.DisplayTicket();
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine("\n\nIncorrect UPI PIN! Enter correct PIN.");
+                    retry--;
+                    if (retry == 0)
+                    {
+                        Console.WriteLine("\n\nEntered wrong pin too many times. Payment failed!");
+                        return false;
+                    }
+                    else goto x;
+                }
+            }
 
             public static bool BookTicket(Customer customer, Show show, List<int> seatNumbers)
             {
@@ -271,40 +326,20 @@
 
                 double totalPrice = show.TicketPrice * seatNumbers.Count;
                 totalPrice = ApplyDiscount(totalPrice, seatNumbers.Count);
+                double pricewithgst = totalPrice * 0.18;
+                Console.WriteLine($"Ticket Price : {totalPrice} + GST : 18%");
+                totalPrice += pricewithgst;
                 Console.WriteLine($"Total Price: ₹{totalPrice}");
-                Console.Write("Do you want to proceed with payment? (yes/no): ");
+                Console.Write("\nDo you want to proceed with payment? (yes/no): ");
                 string confirm = Console.ReadLine().Trim().ToLower();
 
-                if (confirm != "yes")
+                if (confirm != "yes" || confirm == "no" || confirm == "n")
                 {
                     Console.WriteLine("Booking cancelled.");
                     return false;
                 }
-                Console.WriteLine($"Initiating payment from UPI ID: {customer.UpiId}");
-                Console.Write("Enter your 6-digit UPI Pin:");
 
-                if (!int.TryParse(Console.ReadLine(), out int upipin) || upipin < 100000 || upipin > 999999)
-                {
-                    Console.WriteLine("Invalid UPI Pin format. Payment failed.");
-                    return false;
-                }
-
-                if (upipin == customer.UpiPin)
-                {
-                    show.AvailableSeats -= seatNumbers.Count;
-                    show.BookSeats.AddRange(seatNumbers);
-                    double totalprice = show.TicketPrice * seatNumbers.Count;
-                    var ticket = new Ticket(show.Movie.Title, show.ShowTime, seatNumbers, show.Theatre.Name, totalprice);
-                    customer.BookedTickets.Add(ticket);
-                    Console.WriteLine("Payment Successful! Your ticket(s) have been booked.");
-                    ticket.DisplayTicket();
-                    return true;
-                }
-                else
-                {
-                    Console.WriteLine("Incorrect UPI PIN. Payment failed.");
-                    return false;
-                }
+                return PaymentGateway(customer, show, seatNumbers, totalPrice); ;
             }
 
             public static void CancelTicket(Customer customer)
@@ -315,7 +350,7 @@
                     return;
                 }
                 Console.WriteLine("Your booked tickets:");
-                for (int i = 0; i <= customer.BookedTickets.Count; i++)
+                for (int i = 0; i < customer.BookedTickets.Count; i++)
                 {
                     Console.WriteLine($"{i + 1}. {customer.BookedTickets[i].MovieName} - {customer.BookedTickets[i].ShowTime}");
                 }
@@ -420,6 +455,14 @@
                 new Customer("c1","c123","Customer1","c1@gmail.com","876543")
             };
 
+            public static bool IsValidUpiId(string email)
+            {
+                string pattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z]+$";
+                Regex regex = new Regex(pattern);
+
+                return regex.IsMatch(email);
+            }
+
             public static User Login(string id, string password)
             {
                 foreach (var u in Users)
@@ -432,9 +475,10 @@
                 return null;
             }
 
-            public static void RegisterCustomer(string id, string password, string name, string upiid, string upipin)
+            public static void Signup(string id, string password, string name, string upiid, string upipin)
             {
                 Users.Add(new Customer(id, password, name, upiid, upipin));
+                Console.WriteLine("User registered successfully.");
             }
         }
 
@@ -447,7 +491,8 @@
                 while (true)
                 {
                     Console.WriteLine("\n\t\t\t\t\t\t\t\t\t1.Login");
-                    Console.WriteLine("\t\t\t\t\t\t\t\t\t2.Exit");
+                    Console.WriteLine("\t\t\t\t\t\t\t\t\t2.Sign Up");
+                    Console.WriteLine("\t\t\t\t\t\t\t\t\t3.Exit");
                     Console.Write("\t\t\t\t\t\t\t\t  Enter your choice:");
                     switch (Console.ReadLine())
                     {
@@ -489,6 +534,91 @@
                             }
                             break;
                         case "2":
+                            Console.Clear();
+                            Console.WriteLine("\n\t\t\t\t\t\t\t\tRegister Now!\n");
+                            string nname, nid, npass, upiid, upipin;
+                            while (true)
+                            {
+                                Console.Write("Your username:");
+                                nname = Console.ReadLine().Trim();
+                                if (string.IsNullOrEmpty(nname))
+                                {
+                                    Console.WriteLine("Username cannot be empty.");
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+                            while (true)
+                            {
+                                Console.Write("Your User ID:");
+                                nid = Console.ReadLine().Trim();
+                                if (string.IsNullOrEmpty(nid))
+                                {
+                                    Console.WriteLine("User ID cannot be empty.");
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+                            while (true)
+                            {
+                                Console.Write("Enter new password:");
+                                npass = Console.ReadLine().Trim();
+                                if (string.IsNullOrEmpty(npass))
+                                {
+                                    Console.WriteLine("Password cannot be empty.");
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+                            while (true)
+                            {
+                                Console.Write("Confirm your password:");
+                                if (!npass.Equals(Console.ReadLine()))
+                                {
+                                    Console.WriteLine("Password does not match.");
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+                            while (true)
+                            {
+                                Console.Write("Enter your UPI ID:");
+                                upiid = Console.ReadLine();
+                                if (string.IsNullOrEmpty(upiid) || !UserManagement.IsValidUpiId(upiid))
+                                {
+                                    Console.WriteLine("Invalid UPI ID.");
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+
+                            while (true)
+                            {
+                                Console.Write("Enter your UPI Pin:");
+                                upipin = Console.ReadLine();
+                                if (string.IsNullOrEmpty(upipin))
+                                {
+                                    Console.WriteLine("UPI PIN cannot be empty.");
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+
+                            UserManagement.Signup(nid, npass, nname, upiid, upipin);
+                            break; ;
+                        case "3":
                             Console.Clear();
                             Console.WriteLine("\n\t\t\t\t\t\t\t\tThank you! Exiting...");
                             return;
@@ -543,8 +673,19 @@
                             string stitle = Console.ReadLine();
                             Console.Write("Enter show time:");
                             string stime = Console.ReadLine();
-                            Console.Write("Enter available seats:");
-                            int savlseats = int.Parse(Console.ReadLine());
+                            int savlseats;
+                            while (true)
+                            {
+                                Console.Write("Enter available seats (100 - 160):");
+                                if (!int.TryParse(Console.ReadLine(), out savlseats) || savlseats > 160 || savlseats < 100)
+                                {
+                                    Console.WriteLine("Invalid input! Valid total seat number between 100 and 160.");
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
                             Console.Write("Enter ticket price:");
                             double tktprice = double.Parse(Console.ReadLine());
                             AdminOperations.AddShow(stname, ssno, stitle, stime, savlseats, tktprice);
@@ -572,9 +713,10 @@
                     Console.WriteLine("\nCustomer Menu");
                     Console.WriteLine("1. Book Tickets");
                     Console.WriteLine("2. View Booked Tickets");
-                    Console.WriteLine("3. Add Review");
-                    Console.WriteLine("4. View Review");
-                    Console.WriteLine("5. Logout");
+                    Console.WriteLine("3. Cancel Ticket");
+                    Console.WriteLine("4. Add Review");
+                    Console.WriteLine("5. View Review");
+                    Console.WriteLine("6. Logout");
                     Console.Write("Enter your choice:");
 
                     switch (Console.ReadLine())
@@ -585,7 +727,7 @@
                             List<Theatre> theatresincity = AdminOperations.GetTheatres().FindAll(t => t.City.Equals(searchcity, StringComparison.OrdinalIgnoreCase));
                             if (theatresincity.Count == 0)
                             {
-                                Console.WriteLine($"No theatres found in the {searchcity}");
+                                Console.WriteLine($"No theatres found in {searchcity}");
                                 break;
                             }
 
@@ -646,10 +788,9 @@
                                     seatnumbers.Add(seat);
                                 }
                             }
-
                             BookingSystem.BookTicket(customer, chosenshow, seatnumbers);
+                            BookingSystem.DisplaySeats(chosenshow);
                             break;
-
                         case "2":
                             if (customer.BookedTickets.Count == 0)
                             {
@@ -663,18 +804,18 @@
                                 }
                             }
                             break;
-
                         case "3":
-                            ReviewSystem.AddReview();
+                            BookingSystem.CancelTicket(customer);
                             break;
-                        
                         case "4":
-                            ReviewSystem.ViewReview();
+                            ReviewSystem.AddReview(customer);
                             break;
                         case "5":
+                            ReviewSystem.ViewReview();
+                            break;
+                        case "6":
                             Console.WriteLine("Logging out!");
                             return;
-
                         default:
                             Console.WriteLine("Invalid choice, try again.");
                             break;
