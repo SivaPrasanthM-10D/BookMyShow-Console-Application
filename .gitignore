@@ -1,0 +1,7 @@
+*.db
+/.vs/BookMyShow/copilot-chat/863f4550/sessions
+*.db-shm
+*.db-wal
+*.v2
+*.vsidx
+/.vs/BookMyShow/v17
