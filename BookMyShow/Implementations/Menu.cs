@@ -6,17 +6,17 @@ namespace BookMyShow.Implementations
 {
     public class Menu : IMenu
     {
-        private void WriteCentered(string text)
+        private static void WriteCentered(string text)
         {
-            int windowWidth = Console.WindowWidth;
+            int windowWidth = 168;
             int textLength = text.Length;
             int spaces = (windowWidth - textLength) / 2;
             Console.WriteLine(new string(' ', spaces) + text);
         }
 
-        private string ReadCentered(string prompt)
+        private static string ReadCentered(string prompt)
         {
-            int windowWidth = Console.WindowWidth;
+            int windowWidth = 168;
             int textLength = prompt.Length;
             int spaces = (windowWidth - textLength) / 2;
             Console.Write(new string(' ', spaces) + prompt);
@@ -36,43 +36,50 @@ namespace BookMyShow.Implementations
                 switch (choice)
                 {
                     case "1":
-                        Console.Clear();
-                        WriteCentered("Login Page");
-                        string id = ReadCentered("Enter User ID:").Trim();
-                        if (string.IsNullOrEmpty(id))
-                        {
-                            WriteCentered("User ID cannot be empty.");
-                            break;
-                        }
-                        string password = ReadCentered("Enter Password:").Trim();
-                        if (string.IsNullOrEmpty(password))
-                        {
-                            WriteCentered("Password cannot be empty.");
-                            break;
-                        }
-
-                        User user = UserManagement.Login(id, password);
-
-                        if (user is Admin admin)
+                        try
                         {
                             Console.Clear();
-                            WriteCentered("Welcome, Admin!");
-                            AdminMenu(admin);
+                            WriteCentered("");
+                            WriteCentered("Login Page");
+                            WriteCentered("");
+                            string id = ReadCentered("Enter User ID:").Trim();
+                            if (string.IsNullOrEmpty(id))
+                            {
+                                throw new InvalidUserException("User ID cannot be empty.");
+                            }
+                            string password = ReadCentered("Enter Password:").Trim();
+                            if (string.IsNullOrEmpty(password))
+                            {
+                                throw new InvalidPasswordException("Password cannot be empty.");
+                            }
+
+                            User user = UserManagement.Login(id, password);
+
+                            if (user is Admin admin)
+                            {
+                                Console.Clear();
+                                WriteCentered("Welcome, Admin!");
+                                AdminMenu(admin);
+                            }
+                            else if (user is Customer customer)
+                            {
+                                Console.Clear();
+                                WriteCentered($"Welcome, {customer.Name}!");
+                                CustomerMenu(customer);
+                            }
+                            else
+                            {
+                                WriteCentered("Invalid login credentials.");
+                            }
                         }
-                        else if (user is Customer customer)
-                        {
-                            Console.Clear();
-                            WriteCentered($"Welcome, {customer.Name}!");
-                            CustomerMenu(customer);
-                        }
-                        else
-                        {
-                            WriteCentered("Invalid login credentials.");
-                        }
+                        catch (InvalidPasswordException e) { WriteCentered(e.Message); break; }
+                        catch (InvalidUserException e) { WriteCentered(e.Message); break; }
                         break;
                     case "2":
                         Console.Clear();
+                        WriteCentered("");
                         WriteCentered("Register Now!");
+                        WriteCentered("");
                         string nname, nid, npass, upiid, upipin, phoneno;
                         while (true)
                         {
@@ -100,26 +107,38 @@ namespace BookMyShow.Implementations
                         }
                         while (true)
                         {
-                            npass = ReadCentered("Enter new password:").Trim();
-                            if (string.IsNullOrEmpty(npass))
+                            try
                             {
-                                WriteCentered("Password cannot be empty.");
+                                npass = ReadCentered("Enter new password:").Trim();
+                                if (string.IsNullOrEmpty(npass))
+                                {
+                                    throw new InvalidPasswordException("Password cannot be empty.");
+                                }
+                                else if (!UserManagement.IsValidPassword(npass))
+                                {
+                                    throw new InvalidPasswordException();
+                                }
+                                else
+                                {
+                                    break;
+                                }
                             }
-                            else
-                            {
-                                break;
-                            }
+                            catch (InvalidPasswordException e) { WriteCentered(e.Message); }
                         }
                         while (true)
                         {
-                            if (!npass.Equals(ReadCentered("Confirm your password:")))
+                            try
                             {
-                                WriteCentered("Password does not match.");
+                                if (!npass.Equals(ReadCentered("Confirm your password:")))
+                                {
+                                    throw new PasswordNotMatchException();
+                                }
+                                else
+                                {
+                                    break;
+                                }
                             }
-                            else
-                            {
-                                break;
-                            }
+                            catch (PasswordNotMatchException e) { WriteCentered(e.Message); }
                         }
                         while (true)
                         {
@@ -295,13 +314,12 @@ namespace BookMyShow.Implementations
 
         public void CustomerMenu(Customer customer)
         {
-            ReviewSystem rs = new ReviewSystem();
             while (true)
             {
                 try
                 {
                     Console.Clear();
-                    rs.DisplayMovies();
+                    ReviewSystem.DisplayMovies();
                     WriteCentered("");
                     WriteCentered("Customer Menu");
                     WriteCentered("");
@@ -368,7 +386,7 @@ namespace BookMyShow.Implementations
                                 {
                                     throw new SeatNotAvailableException("Invalid Input. Please enter a valid number.");
                                 }
-                                List<int> seatnumbers = new List<int>();
+                                List<int> seatnumbers = [];
                                 for (int i = 0; i < nos; i++)
                                 {
                                     if (!int.TryParse(ReadCentered($"Enter seat number {i + 1}:"), out int seat) || seat <= 0)
@@ -414,7 +432,7 @@ namespace BookMyShow.Implementations
                             Console.Clear();
                             if (!BookingSystem.CancelTicket(customer))
                             {
-                                rs.DisplayMovies();
+                                ReviewSystem.DisplayMovies();
                             }
                             WriteCentered("Ticket cancelled successfully!");
                             break;

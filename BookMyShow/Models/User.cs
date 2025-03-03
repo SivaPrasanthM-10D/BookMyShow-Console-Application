@@ -14,7 +14,7 @@
             Name = name;
             PhoneNo = phoneNo;
         }
-        public void WriteCentered(string text)
+        public static void WriteCentered(string text)
         {
             int windowWidth = Console.WindowWidth;
             int textLength = text.Length;

@@ -22,7 +22,7 @@ namespace BookMyShow.Models
 
         private static void WriteCentered(string text)
         {
-            int windowWidth = Console.WindowWidth;
+            int windowWidth = 168;
             int textLength = text.Length;
             int spaces = (windowWidth - textLength) / 2;
             Console.WriteLine(new string(' ', spaces) + text);
@@ -33,11 +33,11 @@ namespace BookMyShow.Models
             Theatre theatre = AdminOperations.GetTheatres().Find(t => t.Name.Equals(TheatreName, StringComparison.OrdinalIgnoreCase));
             WriteCentered("");
             WriteCentered("****************** Ticket Details ******************");
-            WriteCentered($"* Movie     : {MovieName}");
-            WriteCentered($"* Show Time : {ShowTime}");
-            WriteCentered($"* Seat(s)   : {string.Join(",", SeatNo)}");
-            WriteCentered($"* Theatre   : {TheatreName}, {theatre.Street}");
-            WriteCentered($"* Price     : ₹{Price} (Includes GST)");
+            WriteCentered($"  Movie     : {MovieName}");
+            WriteCentered($"  Show Time : {ShowTime}");
+            WriteCentered($"  Seat(s)   : {string.Join(",", SeatNo)}");
+            WriteCentered($"  Theatre   : {TheatreName}, {theatre.Street}");
+            WriteCentered($"  Price     : ₹{Price} (Includes GST)");
             WriteCentered("***************************************************");
         }
     }

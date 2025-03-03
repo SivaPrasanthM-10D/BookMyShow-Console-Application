@@ -11,7 +11,7 @@ namespace BookMyShow.Implementations
 
         private static void WriteCentered(string text)
         {
-            int windowWidth = Console.WindowWidth;
+            int windowWidth = 168;
             int textLength = text.Length;
             int spaces = (windowWidth - textLength) / 2;
             Console.WriteLine(new string(' ', spaces) + text);

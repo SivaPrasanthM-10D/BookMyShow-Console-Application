@@ -5,23 +5,22 @@ namespace BookMyShow.Implementations
 {
     public static class UserManagement
     {
-        private static void WriteCentered(string text)
-        {
-            int windowWidth = Console.WindowWidth;
-            int textLength = text.Length;
-            int spaces = (windowWidth - textLength) / 2;
-            Console.WriteLine(new string(' ', spaces) + text);
-        }
-
         private static List<User> Users = new List<User>()
             {
                 new Admin("admin","admin123","Admin","9500913678"),
                 new Customer("c1","c123","Customer1","9965168135","c1@gmail.com","876543")
             };
 
+        public static bool IsValidPassword(string password)
+        {
+            string pattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.])[A-Za-z\d@$!%*?&.]{8,15}$";
+            Regex regex = new Regex(pattern);
+
+            return regex.IsMatch(password);
+        }
         public static bool IsValidUpiId(string email)
         {
-            string pattern = @"^[a-z0-9._%+-]+@[a-z]+$";
+            string pattern = @"^[a-z0-9._-]+@[a-z]+$";
             Regex regex = new Regex(pattern);
 
             return regex.IsMatch(email);
@@ -29,7 +28,7 @@ namespace BookMyShow.Implementations
 
         public static bool IsValidPhoneNumber(string phoneno)
         {
-            string pattern = @"(^[6-9]\d{9}$)|(^\+[0-9]{2}\s+[0-9]{2}[0-9]{8}$)|(^[0-9]{3}-[0-9]{4}-[0-9]{4}$)";
+            string pattern = @"^[6-9]\d{9}$";
             Regex regex = new Regex(pattern);
 
             return regex.IsMatch(phoneno);

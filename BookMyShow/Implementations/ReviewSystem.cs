@@ -1,15 +1,15 @@
-﻿using BookMyShow.Models;
-using BookMyShow.Custom_Exceptions;
+﻿using BookMyShow.Custom_Exceptions;
+using BookMyShow.Models;
 namespace BookMyShow.Implementations
 {
     public class ReviewSystem
     {
-        private static List<MovieReview> Reviews = new List<MovieReview>();
-        private static Dictionary<string, double> moviewithrating = new Dictionary<string, double>();
+        private static List<MovieReview> Reviews = [];
+        private static Dictionary<string, double> moviewithrating = [];
 
         private static void WriteCentered(string text)
         {
-            int windowWidth = Console.WindowWidth;
+            int windowWidth = 168;
             int textLength = text.Length;
             int spaces = Math.Max((windowWidth - textLength) / 2, 0);
             Console.WriteLine(new string(' ', spaces) + text);
@@ -17,14 +17,14 @@ namespace BookMyShow.Implementations
 
         private static string ReadCentered(string prompt)
         {
-            int windowWidth = Console.WindowWidth;
+            int windowWidth = 168;
             int textLength = prompt.Length;
             int spaces = (windowWidth - textLength) / 2;
             Console.Write(new string(' ', spaces) + prompt);
             return Console.ReadLine();
         }
 
-        public void DisplayMovies()
+        public static void DisplayMovies()
         {
             try
             {
@@ -50,29 +50,25 @@ namespace BookMyShow.Implementations
                                                .ToDictionary(g => g.Key, g => g.Count());
 
                 int consoleWidth = Console.WindowWidth;
-                int maxTitleLength = availableMovies.Any() ? availableMovies.Max(title => title.Length) : 10;
+                int maxTitleLength = availableMovies.Count != 0 ? availableMovies.Max(title => title.Length) : 10;
                 string format = "{0,-30}{1,-30}{2,-30}{3,-30}{4,-30}";
-                string separator = new string('-', Math.Max(consoleWidth, 150)); // Ensure separator length is non-negative
+                string separator = new('-', Math.Max(consoleWidth, 120));
 
                 WriteCentered(separator);
-                WriteCentered(string.Format(format, "Movie 1", "Movie 2", "Movie 3", "Movie 4", "Movie 5"));
-                WriteCentered(separator);
 
-                for (int i = 0; i < availableMovies.Count; i += 5)
+                for (int i = 0; i < availableMovies.Count; i += 4)
                 {
-                    var rowMovies = availableMovies.Skip(i).Take(5).ToList();
+                    var rowMovies = availableMovies.Skip(i).Take(4).ToList();
                     WriteCentered(string.Format(format,
                         rowMovies.ElementAtOrDefault(0) ?? "",
                         rowMovies.ElementAtOrDefault(1) ?? "",
                         rowMovies.ElementAtOrDefault(2) ?? "",
-                        rowMovies.ElementAtOrDefault(3) ?? "",
-                        rowMovies.ElementAtOrDefault(4) ?? ""));
+                        rowMovies.ElementAtOrDefault(3) ?? ""));
                     WriteCentered(string.Format(format,
                         rowMovies.ElementAtOrDefault(0) != null && moviewithrating.TryGetValue(rowMovies.ElementAtOrDefault(0), out double r1) ? (r1 / movieReviewCounts[rowMovies.ElementAtOrDefault(0)]).ToString("0.0") + "/5" : "",
                         rowMovies.ElementAtOrDefault(1) != null && moviewithrating.TryGetValue(rowMovies.ElementAtOrDefault(1), out double r2) ? (r2 / movieReviewCounts[rowMovies.ElementAtOrDefault(1)]).ToString("0.0") + "/5" : "",
                         rowMovies.ElementAtOrDefault(2) != null && moviewithrating.TryGetValue(rowMovies.ElementAtOrDefault(2), out double r3) ? (r3 / movieReviewCounts[rowMovies.ElementAtOrDefault(2)]).ToString("0.0") + "/5" : "",
-                        rowMovies.ElementAtOrDefault(3) != null && moviewithrating.TryGetValue(rowMovies.ElementAtOrDefault(3), out double r4) ? (r4 / movieReviewCounts[rowMovies.ElementAtOrDefault(3)]).ToString("0.0") + "/5" : "",
-                        rowMovies.ElementAtOrDefault(4) != null && moviewithrating.TryGetValue(rowMovies.ElementAtOrDefault(4), out double r5) ? (r5 / movieReviewCounts[rowMovies.ElementAtOrDefault(4)]).ToString("0.0") + "/5" : ""));
+                        rowMovies.ElementAtOrDefault(3) != null && moviewithrating.TryGetValue(rowMovies.ElementAtOrDefault(3), out double r4) ? (r4 / movieReviewCounts[rowMovies.ElementAtOrDefault(3)]).ToString("0.0") + "/5" : ""));
                     WriteCentered(separator);
                 }
             }
@@ -102,8 +98,7 @@ namespace BookMyShow.Implementations
 
                 if (Reviews.Any(r => r.CustomerName == customer.Name && r.MovieTitle == moviename))
                 {
-                    WriteCentered("You have already reviewed this movie. Please update your review instead.");
-                    return;
+                    throw new DuplicateReviewException("You have already reviewed this movie. Please update your review instead.");
                 }
 
                 string ratingInput = ReadCentered("Rate the movie (1-5): ");
@@ -124,6 +119,11 @@ namespace BookMyShow.Implementations
             {
                 WriteCentered(e.Message);
             }
+            catch (DuplicateReviewException e)
+            {
+                WriteCentered(e.Message);
+                return;
+            }
             catch (Exception e)
             {
                 WriteCentered("An unexpected error occurred: " + e.Message);
@@ -138,14 +138,16 @@ namespace BookMyShow.Implementations
                 {
                     throw new ReviewNotFoundException("No reviews found.");
                 }
-
+            }
+            catch (ReviewNotFoundException e) { WriteCentered(e.Message); }
+            try
+            {
                 string moviename = ReadCentered("Enter movie name to update review: ");
                 var existingReview = Reviews.FirstOrDefault(r => r.CustomerName == customer.Name && r.MovieTitle == moviename);
 
                 if (existingReview == null)
                 {
-                    WriteCentered("No existing review found for this movie.");
-                    return;
+                    throw new ReviewNotFoundException("No existing review found for this movie.");
                 }
 
                 string ratingInput = ReadCentered("Update your rating (1-5): ");
@@ -162,6 +164,7 @@ namespace BookMyShow.Implementations
             catch (ReviewNotFoundException e)
             {
                 WriteCentered(e.Message);
+                return;
             }
             catch (InvalidRatingException e)
             {
@@ -188,8 +191,7 @@ namespace BookMyShow.Implementations
                 string revnoInput = ReadCentered("Enter the review number to remove:");
                 if (!int.TryParse(revnoInput, out int revno) || revno < 1 || revno > Reviews.Count)
                 {
-                    WriteCentered("Invalid review number. Try again.");
-                    return;
+                    throw new InvalidReviewNumberException("Invalid review number. Try again.");
                 }
                 Reviews.RemoveAt(revno - 1);
                 WriteCentered("Review removed successfully!");
