@@ -12,3 +12,18 @@ C:\Users\10decoders\Documents\C# Training\OOps\BookMyShow\BookMyShow\obj\Debug\n
 C:\Users\10decoders\Documents\C# Training\OOps\BookMyShow\BookMyShow\obj\Debug\net8.0\BookMyShow.pdb
 C:\Users\10decoders\Documents\C# Training\OOps\BookMyShow\BookMyShow\obj\Debug\net8.0\BookMyShow.genruntimeconfig.cache
 C:\Users\10decoders\Documents\C# Training\OOps\BookMyShow\BookMyShow\obj\Debug\net8.0\ref\BookMyShow.dll
+C:\Users\10decoders\Documents\GitHub\BookMyShow\BookMyShow\obj\Debug\net8.0\BookMyShow.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\10decoders\Documents\GitHub\BookMyShow\BookMyShow\obj\Debug\net8.0\BookMyShow.AssemblyInfoInputs.cache
+C:\Users\10decoders\Documents\GitHub\BookMyShow\BookMyShow\obj\Debug\net8.0\BookMyShow.AssemblyInfo.cs
+C:\Users\10decoders\Documents\GitHub\BookMyShow\BookMyShow\obj\Debug\net8.0\BookMyShow.csproj.CoreCompileInputs.cache
+C:\Users\10decoders\Documents\GitHub\BookMyShow\BookMyShow\obj\Debug\net8.0\BookMyShow.sourcelink.json
+C:\Users\10decoders\Documents\GitHub\BookMyShow\BookMyShow\obj\Debug\net8.0\BookMyShow.dll
+C:\Users\10decoders\Documents\GitHub\BookMyShow\BookMyShow\obj\Debug\net8.0\refint\BookMyShow.dll
+C:\Users\10decoders\Documents\GitHub\BookMyShow\BookMyShow\obj\Debug\net8.0\BookMyShow.pdb
+C:\Users\10decoders\Documents\GitHub\BookMyShow\BookMyShow\bin\Debug\net8.0\BookMyShow.exe
+C:\Users\10decoders\Documents\GitHub\BookMyShow\BookMyShow\bin\Debug\net8.0\BookMyShow.deps.json
+C:\Users\10decoders\Documents\GitHub\BookMyShow\BookMyShow\bin\Debug\net8.0\BookMyShow.runtimeconfig.json
+C:\Users\10decoders\Documents\GitHub\BookMyShow\BookMyShow\bin\Debug\net8.0\BookMyShow.dll
+C:\Users\10decoders\Documents\GitHub\BookMyShow\BookMyShow\bin\Debug\net8.0\BookMyShow.pdb
+C:\Users\10decoders\Documents\GitHub\BookMyShow\BookMyShow\obj\Debug\net8.0\BookMyShow.genruntimeconfig.cache
+C:\Users\10decoders\Documents\GitHub\BookMyShow\BookMyShow\obj\Debug\net8.0\ref\BookMyShow.dll

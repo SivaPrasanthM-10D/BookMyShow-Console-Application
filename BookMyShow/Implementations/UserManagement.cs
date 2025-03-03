@@ -50,7 +50,6 @@ namespace BookMyShow.Implementations
         public static void Signup(string id, string password, string name, string phoneno, string upiid, string upipin)
         {
             Users.Add(new Customer(id, password, name, phoneno, upiid, upipin));
-            WriteCentered("User registered successfully.");
         }
     }
 }

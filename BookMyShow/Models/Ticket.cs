@@ -31,7 +31,8 @@ namespace BookMyShow.Models
         public void DisplayTicket()
         {
             Theatre theatre = AdminOperations.GetTheatres().Find(t => t.Name.Equals(TheatreName, StringComparison.OrdinalIgnoreCase));
-            WriteCentered("\n****************** Ticket Details ******************");
+            WriteCentered("");
+            WriteCentered("****************** Ticket Details ******************");
             WriteCentered($"* Movie     : {MovieName}");
             WriteCentered($"* Show Time : {ShowTime}");
             WriteCentered($"* Seat(s)   : {string.Join(",", SeatNo)}");

@@ -1,5 +1,4 @@
-﻿
-namespace BookMyShow.Models
+﻿namespace BookMyShow.Models
 {
     public class Screen
     {

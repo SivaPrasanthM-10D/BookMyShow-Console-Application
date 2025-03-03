@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\10decoders\\Documents\\C# Training\\OOps\\BookMyShow\\BookMyShow\\BookMyShow.csproj": {}
+    "C:\\Users\\10decoders\\Documents\\GitHub\\BookMyShow\\BookMyShow\\BookMyShow.csproj": {}
   },
   "projects": {
-    "C:\\Users\\10decoders\\Documents\\C# Training\\OOps\\BookMyShow\\BookMyShow\\BookMyShow.csproj": {
+    "C:\\Users\\10decoders\\Documents\\GitHub\\BookMyShow\\BookMyShow\\BookMyShow.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\10decoders\\Documents\\C# Training\\OOps\\BookMyShow\\BookMyShow\\BookMyShow.csproj",
+        "projectUniqueName": "C:\\Users\\10decoders\\Documents\\GitHub\\BookMyShow\\BookMyShow\\BookMyShow.csproj",
         "projectName": "BookMyShow",
-        "projectPath": "C:\\Users\\10decoders\\Documents\\C# Training\\OOps\\BookMyShow\\BookMyShow\\BookMyShow.csproj",
+        "projectPath": "C:\\Users\\10decoders\\Documents\\GitHub\\BookMyShow\\BookMyShow\\BookMyShow.csproj",
         "packagesPath": "C:\\Users\\10decoders\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\10decoders\\Documents\\C# Training\\OOps\\BookMyShow\\BookMyShow\\obj\\",
+        "outputPath": "C:\\Users\\10decoders\\Documents\\GitHub\\BookMyShow\\BookMyShow\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
