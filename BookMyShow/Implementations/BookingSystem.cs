@@ -1,20 +1,49 @@
-﻿using static BookMyShow.Ticket;
+﻿using BookMyShow.Custom_Exceptions;
+using BookMyShow.Models;
 
 namespace BookMyShow.Implementations
 {
     public static class BookingSystem
     {
+        private static void WriteCentered(string text)
+        {
+            int windowWidth = Console.WindowWidth;
+            int textLength = text.Length;
+            int spaces = (windowWidth - textLength) / 2;
+            Console.WriteLine(new string(' ', spaces) + text);
+        }
+
+        private static string ReadCentered(string prompt)
+        {
+            int windowWidth = Console.WindowWidth;
+            int textLength = prompt.Length;
+            int spaces = (windowWidth - textLength) / 2;
+            Console.Write(new string(' ', spaces) + prompt);
+            return Console.ReadLine();
+        }
+
         public static void DisplaySeats(Show show)
         {
-            Console.WriteLine("\n        Seat Layout:");
-            Console.WriteLine("        =====================================");
-            Console.WriteLine("\n        _________________________________");
-            Console.WriteLine("       /                                 \\");
-            Console.WriteLine();
+            WriteCentered("\n        Seat Layout:");
+            WriteCentered("        =====================================");
+            WriteCentered("\n        _________________________________");
+            WriteCentered("       /                                 \\");
+            WriteCentered("");
 
             int totalseats = show.AvailableSeats + show.BookSeats.Count;
+            int seatsPerRow = 10;
+            int seatWidth = 5; // Width of each seat representation, e.g., "[001]"
+            int rowWidth = seatsPerRow * seatWidth;
+            int windowWidth = Console.WindowWidth;
+            int spaces = (windowWidth - rowWidth) / 2;
+
             for (int seat = 1; seat <= totalseats; seat++)
             {
+                if (seat % seatsPerRow == 1)
+                {
+                    Console.Write(new string(' ', spaces));
+                }
+
                 string seatNumber = seat.ToString();
                 seatNumber = seat < 10 ? "00" + seat : (seat < 100 ? "0" + seat : seat.ToString());
                 if (show.BookSeats.Contains(seat))
@@ -25,43 +54,41 @@ namespace BookMyShow.Implementations
                 {
                     Console.Write($"[{seatNumber}]");
                 }
-                if (seat % 10 == 0) Console.WriteLine();
+                if (seat % seatsPerRow == 0) Console.WriteLine();
             }
 
-            Console.WriteLine("        =====================================\n");
+            WriteCentered("        =====================================\n");
         }
 
         public static double ApplyDiscount(double totalprice, int seatcount)
         {
-            Console.Write("Do you have coupon code? {y/n}:");
-            string inp = Console.ReadLine().ToUpper();
+            string inp = ReadCentered("Do you have coupon code? {y/n}:").ToUpper();
 
             double discount = 0;
             if (seatcount >= 3)
             {
                 discount += 0.10;
-                Console.WriteLine("Bulk discount applied (10% off)!");
+                WriteCentered("Bulk discount applied (10% off)!");
             }
 
             if (inp == "Y")
             {
                 Dictionary<string, double> Coupons = AdminOperations.GetCoupons();
-                Console.Write("Enter the coupon code:");
-                string coupon = Console.ReadLine().ToUpper();
+                string coupon = ReadCentered("Enter the coupon code:").ToUpper();
 
                 if (coupon == "MOVIE10")
                 {
                     discount += 0.10;
-                    Console.WriteLine("Promo code MOVIE10 applied! Extra 10% Off.");
+                    WriteCentered("Promo code MOVIE10 applied! Extra 10% Off.");
                 }
                 else if (Coupons.ContainsKey(coupon))
                 {
                     discount += Coupons[coupon] / 100;
-                    Console.WriteLine($"Coupon code {coupon} applied! Extra {Coupons[coupon]}% Off.");
+                    WriteCentered($"Coupon code {coupon} applied! Extra {Coupons[coupon]}% Off.");
                 }
                 else
                 {
-                    Console.WriteLine("Invalid coupon code.");
+                    WriteCentered("Invalid coupon code.");
                 }
             }
 
@@ -69,105 +96,146 @@ namespace BookMyShow.Implementations
             return finprice;
         }
 
-        public static bool PaymentGateway(Customer customer, Show show, List<int> seatNumbers, double totalprice)
+        public static void PaymentGateway(Customer customer, Show show, List<int> seatNumbers, double totalprice)
         {
-            int retry = 3;
-        x:
-            Console.WriteLine("\t\t\t\t\t\t\t\t PAYMENT GATEWAY");
-            Console.WriteLine($"\n\nInitiating payment from UPI ID: {customer.UpiId}");
-            Console.Write("Enter your 6-digit UPI Pin:");
+            try
+            {
+                WriteCentered("\nRedirecting to payment gateway..............");
+                WriteCentered("\nPAYMENT GATEWAY");
+                WriteCentered("Choose Payment method:");
+                WriteCentered("1. Google Pay");
+                WriteCentered("2. PayTm");
+                WriteCentered("3. PhonePe");
+                string? choice = ReadCentered("Enter your choice:");
+                string? paymentmethod = choice switch
+                {
+                    "1" => "Google Pay",
+                    "2" => "PayTm",
+                    "3" => "PhonePe",
+                    _ => null
+                };
 
-            if (!int.TryParse(Console.ReadLine(), out int upipin) || upipin < 100000 || upipin > 999999)
-            {
+                if (paymentmethod == null)
+                {
+                    throw new InvalidPaymentMethodException();
+                }
 
-                retry--;
-                if (retry == 0)
+                WriteCentered("\n\nPayment Details:");
+                WriteCentered($"Payment Method : {paymentmethod}");
+                WriteCentered($"Amount to be paid : {totalprice}");
+                WriteCentered($"Paying to : {show.Theatre.Name}, {show.Theatre.Street}");
+                string paycfm = ReadCentered("Confirm Payment (pay/cancel)").Trim().ToLower();
+                if (paycfm != "pay")
                 {
-                    Console.WriteLine("\n\nEntered wrong pin too many times. Payment failed.");
-                    return false;
+                    WriteCentered("\n\nPayment Cancelled.");
+                    return;
                 }
-                else
+                int retry = 3;
+                while (retry > 0)
                 {
-                    Console.WriteLine("\n\nInvalid UPI Pin format. Enter correct PIN.");
-                    goto x;
+                    string upipinInput = ReadCentered("Enter your 6-digit UPI Pin:");
+                    if (!int.TryParse(upipinInput, out int upipin) || upipin < 100000 || upipin > 999999)
+                    {
+                        retry--;
+                        if (retry == 0)
+                            throw new PaymentFailedException("\n\nEntered wrong pin too many times. Payment failed.");
+                        else
+                            throw new InvalidUpiException("\n\nInvalid UPI Pin format. Enter correct pin.");
+                    }
+                    else if (upipin == customer.UpiPin)
+                    {
+                        show.AvailableSeats -= seatNumbers.Count;
+                        show.BookSeats.AddRange(seatNumbers);
+                        var ticket = new Ticket(show.Movie.Title, show.ShowTime, seatNumbers, show.Theatre.Name, totalprice);
+                        customer.BookedTickets.Add(ticket);
+                        WriteCentered("\n\nPayment Successful! Your ticket(s) have been booked.");
+                        ticket.DisplayTicket();
+                        return;
+                    }
+                    else
+                    {
+                        retry--;
+                        if (retry == 0)
+                            throw new PaymentFailedException("\n\nEntered wrong pin too many times. Payment failed.");
+                        else
+                            throw new InvalidUpiException("\n\nInvalid UPI Pin format. Enter correct pin.");
+                    }
                 }
+                return;
             }
-            if (upipin == customer.UpiPin)
+            catch (InvalidPaymentMethodException e)
             {
-                show.AvailableSeats -= seatNumbers.Count;
-                show.BookSeats.AddRange(seatNumbers);
-                var ticket = new Ticket(show.Movie.Title, show.ShowTime, seatNumbers, show.Theatre.Name, totalprice);
-                customer.BookedTickets.Add(ticket);
-                Console.WriteLine("\n\nPayment Successful! Your ticket(s) have been booked.");
-                ticket.DisplayTicket();
-                return true;
+                WriteCentered(e.Message);
+                return;
             }
-            else
+            catch (InvalidUpiException e)
             {
-                Console.WriteLine("\n\nIncorrect UPI PIN! Enter correct PIN.");
-                retry--;
-                if (retry == 0)
-                {
-                    Console.WriteLine("\n\nEntered wrong pin too many times. Payment failed!");
-                    return false;
-                }
-                else goto x;
+                WriteCentered(e.Message);
             }
+            catch (PaymentFailedException e)
+            {
+                WriteCentered(e.Message);
+                return;
+            }
+
         }
-
-        public static bool BookTicket(Customer customer, Show show, List<int> seatNumbers)
+        public static void BookTicket(Customer customer, Show show, List<int> seatNumbers)
         {
             foreach (var seat in seatNumbers)
             {
                 if (show.BookSeats.Contains(seat))
                 {
-                    Console.WriteLine($"Seat {seat} already booked. Please choose another seat.");
-                    return false;
+                    WriteCentered($"Seat {seat} already booked. Please choose another seat.");
+                    return;
                 }
+            }
+
+            if (seatNumbers.Count == 0)
+            {
+                WriteCentered("No seats selected. Please select at least one seat.");
+                return;
             }
 
             double totalPrice = show.TicketPrice * seatNumbers.Count;
             totalPrice = ApplyDiscount(totalPrice, seatNumbers.Count);
             double pricewithgst = totalPrice * 0.18;
-            Console.WriteLine($"Ticket Price : {totalPrice} + 18% GST");
+            WriteCentered($"Ticket Price : {totalPrice} + 18% GST");
             totalPrice += pricewithgst;
-            Console.WriteLine($"Total Price: ₹{totalPrice}");
-            Console.Write("\nDo you want to proceed with payment? (yes/no): ");
-            string confirm = Console.ReadLine().Trim().ToLower();
+            WriteCentered($"Total Price: ₹{totalPrice}");
+            string confirm = ReadCentered("\nDo you want to proceed with payment? (yes/no):").Trim().ToLower();
 
-            if (confirm != "yes" || confirm == "no" || confirm == "n")
+            if (confirm != "yes" && confirm != "y")
             {
-                Console.WriteLine("Booking cancelled.");
-                return false;
+                WriteCentered("Booking cancelled.");
+                return;
             }
 
-            return PaymentGateway(customer, show, seatNumbers, totalPrice); ;
+            PaymentGateway(customer, show, seatNumbers, totalPrice);
         }
 
         public static bool CancelTicket(Customer customer)
         {
             if (customer.BookedTickets.Count == 0)
             {
-                Console.WriteLine("No ticket booked to cancel.");
+                WriteCentered("No ticket booked to cancel.");
                 return false;
             }
-            Console.WriteLine("Your booked tickets:");
+            WriteCentered("Your booked tickets:");
             for (int i = 0; i < customer.BookedTickets.Count; i++)
             {
-                Console.WriteLine($"{i + 1}. {customer.BookedTickets[i].MovieName} - {customer.BookedTickets[i].ShowTime}");
+                WriteCentered($"{i + 1}. {customer.BookedTickets[i].MovieName} - {customer.BookedTickets[i].ShowTime}");
             }
 
-            Console.Write("Enter ticket number to cancel:");
-            if (!int.TryParse(Console.ReadLine(), out int choice) || choice < 1 || choice > customer.BookedTickets.Count)
+            string choiceInput = ReadCentered("Enter ticket number to cancel:");
+            if (!int.TryParse(choiceInput, out int choice) || choice < 1 || choice > customer.BookedTickets.Count)
             {
-                Console.WriteLine("Invalid choice.");
+                WriteCentered("Invalid choice.");
                 return false;
             }
-            Console.Write("Please confirm to cancel the ticket (y/n):");
-            char cf = Console.ReadLine()[0];
-            if(cf == 'n')
+            char cf = ReadCentered("Please confirm to cancel the ticket (y/n):")[0];
+            if (cf == 'n')
             {
-                Console.WriteLine("Ticket cancel aborted.");
+                WriteCentered("Ticket cancel aborted.");
                 return false;
             }
             Ticket ticket = customer.BookedTickets[choice - 1];
@@ -185,11 +253,11 @@ namespace BookMyShow.Implementations
             }
             if (refund > 0)
             {
-                Console.WriteLine($"Ticket cancelled. Refund amount : {refund}");
+                WriteCentered($"Ticket cancelled. Refund amount : {refund}");
             }
             else
             {
-                Console.WriteLine("Show already started. No refund.");
+                WriteCentered("Show already started. No refund.");
             }
             customer.BookedTickets.Remove(ticket);
             return true;

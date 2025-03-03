@@ -1,6 +1,6 @@
 ﻿namespace BookMyShow.Interfaces
 {
-    interface ITicket
+    public interface ITicket
     {
         void DisplayTicket();
     }

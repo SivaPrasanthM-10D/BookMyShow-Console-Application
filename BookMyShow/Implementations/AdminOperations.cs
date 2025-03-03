@@ -1,4 +1,5 @@
-﻿using static BookMyShow.Ticket;
+﻿using BookMyShow.Models;
+using BookMyShow.Custom_Exceptions;
 namespace BookMyShow.Implementations
 {
     public static class AdminOperations
@@ -8,73 +9,139 @@ namespace BookMyShow.Implementations
         private static List<Theatre> Theatres = new List<Theatre>();
         private static Dictionary<string, double> Coupons = new Dictionary<string, double>();
 
-        public static void AddMovie(string title, string genere, int duration)
+        private static void WriteCentered(string text)
         {
-            Movies.Add(new Movie(title, genere, duration));
-            Console.WriteLine("Movie Added Successfully.");
+            int windowWidth = Console.WindowWidth;
+            int textLength = text.Length;
+            int spaces = (windowWidth - textLength) / 2;
+            Console.WriteLine(new string(' ', spaces) + text);
         }
 
-        public static void AddScreen(int screennumber)
+        public static void AddMovie(string title, string genre, int duration)
         {
-            Screens.Add(new Screen(screennumber));
-        }
-
-        public static void AddTheatre(string name, string city, string street, int numscreens)
-        {
-            //Theatres.Add(new Theatre(name, location));
-            Theatre theatre = new Theatre(name, city, street);
-            for (int i = 1; i <= numscreens; i++)
+            try
             {
-                theatre.Screens.Add(new Screen(i));
+                if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(genre) || duration <= 0)
+                {
+                    throw new ArgumentException("Invalid movie details provided.");
+                }
+                Movies.Add(new Movie(title, genre, duration));
+                WriteCentered("Movie Added Successfully.");
             }
-            Theatres.Add(theatre);
+            catch (Exception ex)
+            {
+                WriteCentered($"Error: {ex.Message}");
+            }
+        }
+
+        public static void AddScreen(int screenNumber)
+        {
+            try
+            {
+                if (screenNumber <= 0)
+                {
+                    throw new ArgumentException("Invalid screen number.");
+                }
+                Screens.Add(new Screen(screenNumber));
+            }
+            catch (Exception ex)
+            {
+                WriteCentered($"Error: {ex.Message}");
+            }
+        }
+
+        public static void AddTheatre(string name, string city, string street, int numScreens)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(city) || string.IsNullOrEmpty(street) || numScreens <= 0)
+                {
+                    throw new ArgumentException("Invalid theatre details provided.");
+                }
+                Theatre theatre = new Theatre(name, city, street);
+                for (int i = 1; i <= numScreens; i++)
+                {
+                    theatre.Screens.Add(new Screen(i));
+                }
+                Theatres.Add(theatre);
+            }
+            catch (Exception ex)
+            {
+                WriteCentered($"Error: {ex.Message}");
+            }
+        }
+
+        public static List<Movie> GetMovies()
+        {
+            return Movies;
         }
 
         public static List<Theatre> GetTheatres()
         {
             return Theatres;
         }
+
         public static Dictionary<string, double> GetCoupons()
         {
             return Coupons;
         }
 
-        public static void AddShow(string theatrename, int screenno, string movietitle, DateTime showtime, int availableseats, double tktprice)
+        public static void AddShow(string theatreName, int screenNo, string movieTitle, DateTime showTime, int availableSeats, double ticketPrice)
         {
-            Movie? movie = Movies.Find(m => m.Title.Equals(movietitle, StringComparison.OrdinalIgnoreCase));
-            Theatre? theatre = Theatres.Find(t => t.Name.Equals(theatrename, StringComparison.OrdinalIgnoreCase));
-
-            if (movie == null)
+            try
             {
-                Console.WriteLine("Movie not found. Please add the movie first.");
-                return;
-            }
+                Movie? movie = Movies.Find(m => m.Title.Equals(movieTitle, StringComparison.OrdinalIgnoreCase));
+                Theatre? theatre = Theatres.Find(t => t.Name.Equals(theatreName, StringComparison.OrdinalIgnoreCase));
 
-            if (theatre == null)
-            {
-                Console.WriteLine("Theatre not found. Please add the theatre first.");
-                return;
-            }
+                if (movie == null)
+                {
+                    throw new MovieNotFoundException("Movie not found.");
+                }
 
-            Screen? screen = theatre.Screens.Find(s => s.ScreenNumber == screenno);
-            if (screen == null)
-            {
-                Console.WriteLine($"Screen number {screenno} does not exist in {theatre.Name}");
-                return;
+                if (theatre == null)
+                {
+                    throw new TheatreNotFoundException("Theatre not found.");
+                }
+
+                Screen? screen = theatre.Screens.Find(s => s.ScreenNumber == screenNo);
+                if (screen == null)
+                {
+                    throw new ScreenNotFoundException(screenNo, theatre.Name);
+                }
+
+                if (availableSeats < 0 || ticketPrice < 0)
+                {
+                    throw new ArgumentException("Invalid show details provided.");
+                }
+
+                screen.Shows.Add(new Show(movie, showTime, availableSeats, theatre, ticketPrice));
+                WriteCentered($"Show successfully added: {movie.Title} at {theatre.Name}, Screen {screenNo}");
             }
-            screen.Shows.Add(new Show(movie, showtime, availableseats, theatre, tktprice));
-            Console.WriteLine($"Show successfully added: {movie.Title} at {theatre.Name}, Screen {screenno}");
+            catch (Exception ex)
+            {
+                WriteCentered($"Error: {ex.Message}");
+            }
         }
 
         public static void AddCoupon(string code, double discount)
         {
-            if (Coupons.ContainsKey(code))
+            try
             {
-                Console.WriteLine("Coupon already exists!");
-                return;
+                if (string.IsNullOrEmpty(code) || discount <= 0 || discount > 100)
+                {
+                    throw new ArgumentException("Invalid coupon details provided.");
+                }
+                if (Coupons.ContainsKey(code))
+                {
+                    throw new DuplicateCouponException("Coupon already exists.");
+                }
+                Coupons[code] = discount;
+                WriteCentered("Coupon added successfully!");
             }
-            Coupons[code] = discount;
-            Console.WriteLine("Coupon added successfully!");
+            catch (Exception ex)
+            {
+                WriteCentered($"Error: {ex.Message}");
+            }
         }
     }
 }
