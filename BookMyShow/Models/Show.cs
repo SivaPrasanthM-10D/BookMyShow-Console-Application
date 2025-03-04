@@ -5,15 +5,17 @@ namespace BookMyShow.Models
     {
         public Movie Movie;
         public string ShowTime;
+        public string ShowDate;
         public int AvailableSeats;
         public Theatre Theatre;
         public double TicketPrice;
         public List<int> BookSeats = new List<int>();
 
-        public Show(Movie movie, DateTime showTime, int availableSeats, Theatre theatre, double ticketPrice)
+        public Show(Movie movie, DateTime showTime, DateTime showDate, int availableSeats, Theatre theatre, double ticketPrice)
         {
             Movie = movie;
             ShowTime = showTime.ToString("hh:mm tt");
+            ShowDate = showDate.ToString("dd/MM/yyyy");
             AvailableSeats = availableSeats;
             Theatre = theatre;
             TicketPrice = ticketPrice;

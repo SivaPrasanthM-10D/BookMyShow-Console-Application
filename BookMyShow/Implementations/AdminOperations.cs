@@ -86,7 +86,24 @@ namespace BookMyShow.Implementations
             return Coupons;
         }
 
-        public static void AddShow(string theatreName, int screenNo, string movieTitle, DateTime showTime, int availableSeats, double ticketPrice)
+        public static bool ShowExists(string theatreName, int screenNo, DateTime showTime, DateTime showDate)
+        {
+            Theatre? theatre = Theatres.Find(t => t.Name.Equals(theatreName, StringComparison.OrdinalIgnoreCase));
+            if (theatre == null)
+            {
+                throw new TheatreNotFoundException("Theatre not found.");
+            }
+
+            Screen? screen = theatre.Screens.Find(s => s.ScreenNumber == screenNo);
+            if (screen == null)
+            {
+                throw new ScreenNotFoundException(screenNo, theatre.Name);
+            }
+
+            return screen.Shows.Any(s => s.ShowTime == showTime.ToString() && s.ShowDate == showDate.ToString());
+        }
+
+        public static void AddShow(string theatreName, int screenNo, string movieTitle, DateTime showTime, DateTime showDate, int availableSeats, double ticketPrice)
         {
             try
             {
@@ -114,8 +131,39 @@ namespace BookMyShow.Implementations
                     throw new ArgumentException("Invalid show details provided.");
                 }
 
-                screen.Shows.Add(new Show(movie, showTime, availableSeats, theatre, ticketPrice));
+                screen.Shows.Add(new Show(movie, showTime, showDate, availableSeats, theatre, ticketPrice));
                 WriteCentered($"Show successfully added: {movie.Title} at {theatre.Name}, Screen {screenNo}");
+            }
+            catch (Exception ex)
+            {
+                WriteCentered($"Error: {ex.Message}");
+            }
+        }
+
+        public static void RemoveShow(string theatreName, int screenNo, string movieTitle, DateTime showTime)
+        {
+            try
+            {
+                Theatre? theatre = Theatres.Find(t => t.Name.Equals(theatreName, StringComparison.OrdinalIgnoreCase));
+                if (theatre == null)
+                {
+                    throw new TheatreNotFoundException("Theatre not found.");
+                }
+
+                Screen? screen = theatre.Screens.Find(s => s.ScreenNumber == screenNo);
+                if (screen == null)
+                {
+                    throw new ScreenNotFoundException(screenNo, theatre.Name);
+                }
+
+                Show? show = screen.Shows.Find(s => s.Movie.Title.Equals(movieTitle, StringComparison.OrdinalIgnoreCase) && s.ShowTime == showTime.ToString());
+                if (show == null)
+                {
+                    throw new ShowNotFoundException("Show not found.");
+                }
+
+                screen.Shows.Remove(show);
+                WriteCentered($"Show successfully removed: {movieTitle} at {theatre.Name}, Screen {screenNo}");
             }
             catch (Exception ex)
             {
@@ -137,6 +185,43 @@ namespace BookMyShow.Implementations
                 }
                 Coupons[code] = discount;
                 WriteCentered("Coupon added successfully!");
+            }
+            catch (Exception ex)
+            {
+                WriteCentered($"Error: {ex.Message}");
+            }
+        }
+        public static void RemoveTheatre(string theatreName)
+        {
+            try
+            {
+                Theatre? theatre = Theatres.Find(t => t.Name.Equals(theatreName, StringComparison.OrdinalIgnoreCase));
+                if (theatre == null)
+                {
+                    throw new TheatreNotFoundException("Theatre not found.");
+                }
+
+                Theatres.Remove(theatre);
+                WriteCentered($"Theatre successfully removed: {theatreName}");
+            }
+            catch (Exception ex)
+            {
+                WriteCentered($"Error: {ex.Message}");
+            }
+        }
+
+        public static void RemoveMovie(string movieTitle)
+        {
+            try
+            {
+                Movie? movie = Movies.Find(m => m.Title.Equals(movieTitle, StringComparison.OrdinalIgnoreCase));
+                if (movie == null)
+                {
+                    throw new MovieNotFoundException("Movie not found.");
+                }
+
+                Movies.Remove(movie);
+                WriteCentered($"Movie successfully removed: {movieTitle}");
             }
             catch (Exception ex)
             {

@@ -51,7 +51,7 @@ namespace BookMyShow.Implementations
 
                 int consoleWidth = Console.WindowWidth;
                 int maxTitleLength = availableMovies.Count != 0 ? availableMovies.Max(title => title.Length) : 10;
-                string format = "{0,-30}{1,-30}{2,-30}{3,-30}{4,-30}";
+                string format = $"{{0,-{maxTitleLength + 5}}}{{1,-{maxTitleLength + 5}}}{{2,-{maxTitleLength + 5}}}{{3,-{maxTitleLength + 5}}}";
                 string separator = new('-', Math.Max(consoleWidth, 120));
 
                 WriteCentered(separator);
@@ -149,7 +149,11 @@ namespace BookMyShow.Implementations
                 {
                     throw new ReviewNotFoundException("No existing review found for this movie.");
                 }
-
+                Console.WriteLine();
+                WriteCentered("Existing Review:");
+                WriteCentered($"Movie : {existingReview.MovieTitle}");
+                WriteCentered($"Rating : {existingReview.Rating}");
+                WriteCentered($"Review : {existingReview.Review}\n");
                 string ratingInput = ReadCentered("Update your rating (1-5): ");
                 if (!double.TryParse(ratingInput, out double rating) || rating < 1 || rating > 5)
                 {
@@ -206,7 +210,6 @@ namespace BookMyShow.Implementations
                 WriteCentered(e.Message);
                 return;
             }
-
         }
 
         public static void ViewReview()
@@ -229,7 +232,6 @@ namespace BookMyShow.Implementations
                 WriteCentered(e.Message);
                 return;
             }
-
         }
     }
 }

@@ -7,14 +7,16 @@ namespace BookMyShow.Models
     {
         public string MovieName;
         public string ShowTime;
+        public string ShowDate;
         public List<int> SeatNo;
         public string TheatreName;
         public double Price;
 
-        public Ticket(string movieName, string showTime, List<int> seatNo, string theatreName, double price)
+        public Ticket(string movieName, string showTime, string showDate,List<int> seatNo, string theatreName, double price)
         {
             MovieName = movieName;
             ShowTime = showTime;
+            ShowDate = showDate;
             SeatNo = seatNo ?? new List<int>();
             TheatreName = theatreName;
             Price = price;
@@ -34,6 +36,7 @@ namespace BookMyShow.Models
             WriteCentered("");
             WriteCentered("****************** Ticket Details ******************");
             WriteCentered($"  Movie     : {MovieName}");
+            WriteCentered($"  Show Date : {ShowDate}");
             WriteCentered($"  Show Time : {ShowTime}");
             WriteCentered($"  Seat(s)   : {string.Join(",", SeatNo)}");
             WriteCentered($"  Theatre   : {TheatreName}, {theatre.Street}");

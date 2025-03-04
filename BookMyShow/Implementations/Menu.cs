@@ -57,19 +57,16 @@ namespace BookMyShow.Implementations
 
                             if (user is Admin admin)
                             {
-                                Console.Clear();
-                                WriteCentered("Welcome, Admin!");
                                 AdminMenu(admin);
                             }
                             else if (user is Customer customer)
                             {
-                                Console.Clear();
-                                WriteCentered($"Welcome, {customer.Name}!");
                                 CustomerMenu(customer);
                             }
                             else
                             {
                                 WriteCentered("Invalid login credentials.");
+                                ReadCentered("Press any key to retry:");
                             }
                         }
                         catch (InvalidPasswordException e) { WriteCentered(e.Message); break; }
@@ -186,11 +183,14 @@ namespace BookMyShow.Implementations
                             }
                         }
 
+
                         Console.Clear();
                         UserManagement.Signup(nid, npass, nname, phoneno, upiid, upipin);
                         WriteCentered("Registration successful!");
+                        ReadCentered("Press any key to exit:");
                         break;
                     case "3":
+
                         Console.Clear();
                         WriteCentered("Thank you! Exiting...");
                         return;
@@ -205,20 +205,24 @@ namespace BookMyShow.Implementations
         {
             while (true)
             {
+
                 Console.Clear();
+                WriteCentered("Welcome, Admin!");
                 WriteCentered("");
                 WriteCentered("Admin Menu");
                 WriteCentered("");
                 WriteCentered("1. Add Theatre");
-                WriteCentered("2. Add Movie");
-                WriteCentered("3. Add Show");
-                WriteCentered("4. View Reviews");
-                WriteCentered("5. Remove Reviews");
-                WriteCentered("6. Add Coupon");
-                WriteCentered("7. View Profile");
-                WriteCentered("8. Logout");
+                WriteCentered("2. Remove Theatre");
+                WriteCentered("3. Add Movie");
+                WriteCentered("4. Remove Movie");
+                WriteCentered("5. Add Show");
+                WriteCentered("6. Remove Show");
+                WriteCentered("7. View Reviews");
+                WriteCentered("8. Remove Review");
+                WriteCentered("9. Add Coupon");
+                WriteCentered("10. View Profile");
+                WriteCentered("11. Logout");
                 string choice = ReadCentered("Enter your choice:");
-
 
                 switch (choice)
                 {
@@ -230,27 +234,149 @@ namespace BookMyShow.Implementations
                         int sno = int.Parse(ReadCentered("Enter number of screens:"));
                         AdminOperations.AddTheatre(tname, city, street, sno);
                         WriteCentered("Theatre added successfully!");
+                        ReadCentered("Press any key to exit:");
                         break;
                     case "2":
+                        Console.Clear();
+                        string theatreName = ReadCentered("Enter theatre name to remove:");
+                        Theatre? theatre = AdminOperations.GetTheatres().Find(t => t.Name.Equals(theatreName, StringComparison.OrdinalIgnoreCase));
+                        if (theatre != null)
+                        {
+                            WriteCentered($"Theatre Name: {theatre.Name}");
+                            WriteCentered($"City: {theatre.City}");
+                            WriteCentered($"Street: {theatre.Street}");
+                            WriteCentered($"Number of Screens: {theatre.Screens.Count}");
+                            string confirm = ReadCentered("Are you sure you want to remove this theatre? (yes/no):");
+                            if (confirm.ToLower() == "yes")
+                            {
+                                AdminOperations.RemoveTheatre(theatreName);
+                                WriteCentered("Theatre removed successfully!");
+                                ReadCentered("Press any key to exit:");
+                            }
+                            else
+                            {
+                                WriteCentered("Theatre removal cancelled.");
+                                ReadCentered("Press any key to exit:");
+                            }
+                        }
+                        else
+                        {
+                            WriteCentered("Theatre not found.");
+                            ReadCentered("Press any key to exit:");
+                        }
+                        break;
+                    case "3":
                         Console.Clear();
                         string title = ReadCentered("Enter movie title:");
                         string genre = ReadCentered("Enter genre:");
                         int duration = int.Parse(ReadCentered("Enter duration (minutes):"));
                         AdminOperations.AddMovie(title, genre, duration);
                         WriteCentered("Movie added successfully!");
+                        ReadCentered("Press any key to exit:");
                         break;
-                    case "3":
+                    case "4":
+                        Console.Clear();
+                        string movieTitle = ReadCentered("Enter movie title to remove:");
+                        Movie? movie = AdminOperations.GetMovies().Find(m => m.Title.Equals(movieTitle, StringComparison.OrdinalIgnoreCase));
+                        if (movie != null)
+                        {
+                            WriteCentered($"Movie Title: {movie.Title}");
+                            WriteCentered($"Genre: {movie.Genre}");
+                            WriteCentered($"Duration: {movie.Duration} minutes");
+                            string confirm = ReadCentered("Are you sure you want to remove this movie? (yes/no):");
+                            if (confirm.ToLower() == "yes")
+                            {
+                                AdminOperations.RemoveMovie(movieTitle);
+                                WriteCentered("Movie removed successfully!");
+                                ReadCentered("Press any key to exit:");
+                            }
+                            else
+                            {
+                                WriteCentered("Movie removal cancelled.");
+                                ReadCentered("Press any key to exit:");
+                            }
+                        }
+                        else
+                        {
+                            WriteCentered("Movie not found.");
+                            ReadCentered("Press any key to exit:");
+                        }
+                        break;
+                    case "5":
                         try
                         {
                             Console.Clear();
+                            WriteCentered("Available Theatres:");
+                            foreach (var th in AdminOperations.GetTheatres())
+                            {
+                                WriteCentered($"{th.Name} - {th.Screens.Count} screens");
+                            }
+                            WriteCentered("Available Movies:");
+                            foreach (var mv in AdminOperations.GetMovies())
+                            {
+                                WriteCentered($"{mv.Title}");
+                            }
                             string stname = ReadCentered("Enter theatre name:");
                             int ssno = int.Parse(ReadCentered("Enter screen number:"));
                             string stitle = ReadCentered("Enter movie title:");
-                            string st = ReadCentered("Enter show time (HH:MM AM/PM):");
+                            string sd = ReadCentered("Enter show date (DD/MM/YYYY):");
+                            DateTime.TryParseExact(sd, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime sdate);
+                            string st;
+                            DateTime stime;
+                            List<string> showtimings = new List<string> { "10:30 AM", "02:30 PM", "06:30 PM", "10:30 PM" };
+                            List<Show> shows = AdminOperations.GetTheatres()
+                                .Find(t => t.Name.Equals(stname, StringComparison.OrdinalIgnoreCase))?
+                                .Screens.Find(s => s.ScreenNumber == ssno)?
+                                .Shows.FindAll(sh => sh.ShowDate.Equals(sdate.ToString("dd/MM/yyyy")) && sh.ShowTime != null);
+                            String stimings = "";
+                            if (shows.Count > 0)
+                            {
+                                foreach (string sts in showtimings)
+                                {
+                                    foreach (var s in shows)
+                                    {
+                                        if (!sts.Equals(s.ShowTime.ToString()))
+                                        {
+                                            stimings += "| ";
+                                            stimings += sts;
+                                            stimings += " | ";
+                                        }
+                                    }
+
+                                }
+                            }
+                            else
+                            {
+                                foreach (var s in showtimings)
+                                {
+                                    stimings += "| ";
+                                    stimings += s;
+                                    stimings += " | ";
+                                }
+                            }
+
+                            while (true)
+                            {
+                                WriteCentered(stimings);
+                                st = ReadCentered("Enter show time (HH:MM AM/PM):");
+                                if (!DateTime.TryParseExact(st, "hh:mm tt", null, System.Globalization.DateTimeStyles.None, out stime) ||
+                                    !showtimings.Contains(st))
+                                {
+                                    throw new InvalidShowtimeException("Invalid show time. Allowed show times are 10:30 AM, 02:30 PM, 06:30 PM, and 10:30 PM.");
+                                }
+                                if (AdminOperations.ShowExists(stname, ssno, stime, sdate))
+                                {
+                                    throw new DuplicateShowException("A show already exists for the same date and time.");
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+
                             int savlseats;
                             while (true)
                             {
-
                                 if (!int.TryParse(ReadCentered("Enter available seats (100 - 160):"), out savlseats) || savlseats > 160 || savlseats < 100)
                                 {
                                     throw new InvalidSeatNoException("Invalid input! Valid total seat number between 100 and 160.");
@@ -262,22 +388,62 @@ namespace BookMyShow.Implementations
                             }
                             double tktprice = double.Parse(ReadCentered("Enter ticket price:"));
 
-                            DateTime.TryParseExact(st, "hh:mm tt", null, System.Globalization.DateTimeStyles.None, out DateTime stime);
-                            AdminOperations.AddShow(stname, ssno, stitle, stime, savlseats, tktprice);
+                            AdminOperations.AddShow(stname, ssno, stitle, stime, sdate, savlseats, tktprice);
                             WriteCentered("Show added successfully!");
+                            ReadCentered("Press any key to exit:");
                         }
                         catch (InvalidSeatNoException e) { WriteCentered($"{e.Message}"); }
+                        catch (DuplicateShowException e) { WriteCentered($"{e.Message}"); }
+                        catch (InvalidShowtimeException e) { WriteCentered($"{e.Message}"); }
                         break;
-                    case "4":
+                    case "6":
+                        Console.Clear();
+                        string rTheatreName = ReadCentered("Enter theatre name:");
+                        int rScreenNo = int.Parse(ReadCentered("Enter screen number:"));
+                        string rMovieTitle = ReadCentered("Enter movie title:");
+                        string rShowTime = ReadCentered("Enter show time (HH:MM AM/PM):");
+                        DateTime.TryParseExact(rShowTime, "hh:mm tt", null, System.Globalization.DateTimeStyles.None, out DateTime rShowDateTime);
+                        Show? show = AdminOperations.GetTheatres()
+                            .Find(t => t.Name.Equals(rTheatreName, StringComparison.OrdinalIgnoreCase))?
+                            .Screens.Find(s => s.ScreenNumber == rScreenNo)?
+                            .Shows.Find(s => s.Movie.Title.Equals(rMovieTitle, StringComparison.OrdinalIgnoreCase) && s.ShowTime == rShowDateTime.ToString("hh:mm tt"));
+                        if (show != null)
+                        {
+                            WriteCentered($"Movie Title: {show.Movie.Title}");
+                            WriteCentered($"Show Time: {show.ShowTime}");
+                            WriteCentered($"Show Date: {show.ShowDate}");
+                            WriteCentered($"Available Seats: {show.AvailableSeats}");
+                            WriteCentered($"Ticket Price: ₹{show.TicketPrice}");
+                            string confirm = ReadCentered("Are you sure you want to remove this show? (yes/no):");
+                            if (confirm.ToLower() == "yes")
+                            {
+                                AdminOperations.RemoveShow(rTheatreName, rScreenNo, rMovieTitle, rShowDateTime);
+                                WriteCentered("Show removed successfully!");
+                                ReadCentered("Press any key to exit:");
+                            }
+                            else
+                            {
+                                WriteCentered("Show removal cancelled.");
+                                ReadCentered("Press any key to exit:");
+                            }
+                        }
+                        else
+                        {
+                            WriteCentered("Show not found.");
+                            ReadCentered("Press any key to exit:");
+                        }
+                        break;
+                    case "7":
                         Console.Clear();
                         ReviewSystem.ViewReview();
                         break;
-                    case "5":
+                    case "8":
                         Console.Clear();
                         ReviewSystem.RemoveReview();
                         WriteCentered("Review removed successfully!");
+                        ReadCentered("Press any key to exit:");
                         break;
-                    case "6":
+                    case "9":
                         try
                         {
                             Console.Clear();
@@ -292,17 +458,19 @@ namespace BookMyShow.Implementations
                             }
                             AdminOperations.AddCoupon(code, discount);
                             WriteCentered("Coupon added successfully!");
+                            ReadCentered("Press any key to exit:");
                         }
                         catch (InvalidCouponException e) { WriteCentered(e.Message); break; }
                         break;
-                    case "7":
+                    case "10":
+
                         Console.Clear();
                         WriteCentered("");
                         WriteCentered(".......Profile.......\n");
                         admin.DisplayUserInfo();
                         ReadCentered("Press any key to exit:");
                         break;
-                    case "8":
+                    case "11":
                         WriteCentered("Logging out!");
                         return;
                     default:
@@ -318,7 +486,9 @@ namespace BookMyShow.Implementations
             {
                 try
                 {
+
                     Console.Clear();
+                    WriteCentered($"Welcome, {customer.Name}!");
                     ReviewSystem.DisplayMovies();
                     WriteCentered("");
                     WriteCentered("Customer Menu");
@@ -328,8 +498,10 @@ namespace BookMyShow.Implementations
                     WriteCentered("3. Cancel Ticket");
                     WriteCentered("4. Add Review");
                     WriteCentered("5. View Review");
-                    WriteCentered("6. View Profile");
-                    WriteCentered("7. Logout");
+                    WriteCentered("6. Update Review");
+                    WriteCentered("7. Delete Review");
+                    WriteCentered("8. View Profile");
+                    WriteCentered("9. Logout");
                     string choice = ReadCentered("Enter your choice:");
 
                     switch (choice)
@@ -402,6 +574,7 @@ namespace BookMyShow.Implementations
                                 BookingSystem.BookTicket(customer, chosenshow, seatnumbers);
                                 BookingSystem.DisplaySeats(chosenshow);
                                 WriteCentered("Tickets booked successfully!");
+                                ReadCentered("Press any key for customer menu:");
                             }
                             catch (InvalidTheatreNameException e) { WriteCentered(e.Message); break; }
                             catch (InvalidShowtimeException e) { WriteCentered(e.Message); break; }
@@ -413,6 +586,7 @@ namespace BookMyShow.Implementations
                         case "2":
                             try
                             {
+
                                 Console.Clear();
                                 if (customer.BookedTickets.Count == 0)
                                 {
@@ -426,40 +600,55 @@ namespace BookMyShow.Implementations
                                     }
                                 }
                             }
-                            catch (TicketNotFoundException e) { WriteCentered(e.Message); }
+                            catch (TicketNotFoundException e) { WriteCentered(e.Message); ReadCentered("Press any key to exit:"); }
                             break;
                         case "3":
+
                             Console.Clear();
                             if (!BookingSystem.CancelTicket(customer))
                             {
                                 ReviewSystem.DisplayMovies();
                             }
                             WriteCentered("Ticket cancelled successfully!");
+                            ReadCentered("Press any key for customer menu:");
                             break;
                         case "4":
+
                             Console.Clear();
                             ReviewSystem.AddReview(customer);
                             WriteCentered("Review added successfully!");
+                            ReadCentered("Press any key for customer menu:");
                             break;
                         case "5":
                             Console.Clear();
                             ReviewSystem.ViewReview();
+                            ReadCentered("Press any key for customer menu:");
                             break;
                         case "6":
+                            Console.Clear();
+                            ReviewSystem.UpdateReview(customer);
+                            ReadCentered("Press any key for customer menu:");
+                            break;
+                        case "7":
+                            Console.Clear();
+                            ReviewSystem.RemoveReview();
+                            ReadCentered("Press any key for customer menu:");
+                            break;
+                        case "8":
                             Console.Clear();
                             WriteCentered("");
                             WriteCentered(".......Profile.......\n");
                             customer.DisplayUserInfo();
-                            ReadCentered("Press any key to exit:");
+                            ReadCentered("Press any key for customer menu:");
                             break;
-                        case "7":
+                        case "9":
                             WriteCentered("Logging out!");
                             return;
                         default:
-                            throw new InvalidChoiceException("Invalid choice, try again.");
+                            throw new InvalidChoiceException("Invalid choice.");
                     }
                 }
-                catch (InvalidChoiceException e) { WriteCentered(e.Message); break; }
+                catch (InvalidChoiceException e) { WriteCentered(e.Message); ReadCentered("Press any key to try again:"); break; }
             }
         }
     }
