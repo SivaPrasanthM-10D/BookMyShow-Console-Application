@@ -86,10 +86,12 @@ namespace BookMyShow.Implementations
         {
             try
             {
+                WriteCentered("**Enter (EXIT) to exit**\n");
                 var movies = AdminOperations.GetMovies();
                 var availableMovies = movies.Select(movie => movie.Title).ToList();
 
                 string moviename = ReadCentered("Enter movie name: ");
+                if(moviename == "EXIT") { return; }
 
                 if (!availableMovies.Contains(moviename))
                 {
@@ -102,97 +104,85 @@ namespace BookMyShow.Implementations
                 }
 
                 string ratingInput = ReadCentered("Rate the movie (1-5): ");
+                if(ratingInput == "EXIT") { return; }
                 if (!double.TryParse(ratingInput, out double rating) || rating < 1 || rating > 5)
                 {
                     throw new InvalidRatingException("Invalid rating. Must be between 1 and 5.");
                 }
 
                 string review = ReadCentered("Enter your review: ");
+                if(review == "EXIT") { return; }
                 Reviews.Add(new MovieReview(customer.Name, moviename, rating, review));
-                WriteCentered("Thank you for your review!");
+                WriteCentered("Review added successfully!");
+                ReadCentered("Press any key for customer menu:");
             }
-            catch (InvalidMovieException e)
-            {
-                WriteCentered(e.Message);
-            }
-            catch (InvalidRatingException e)
-            {
-                WriteCentered(e.Message);
-            }
-            catch (DuplicateReviewException e)
-            {
-                WriteCentered(e.Message);
-                return;
-            }
-            catch (Exception e)
-            {
-                WriteCentered("An unexpected error occurred: " + e.Message);
-            }
+            catch(InvalidMovieException e) { WriteCentered(e.Message); ReadCentered("Press any key to exit:"); return; }
+            catch (DuplicateReviewException e) { WriteCentered(e.Message); ReadCentered("Press any key to exit:"); return; }
+            catch (InvalidRatingException e) { WriteCentered(e.Message); ReadCentered("Press any key to exit:"); return; }
+            catch (Exception e) { WriteCentered("An unexpected error occurred: " + e.Message); }
+
         }
 
         public static void UpdateReview(Customer customer)
         {
             try
             {
+                WriteCentered("**Enter (EXIT) to exit**\n");
                 if (Reviews.Count == 0)
                 {
                     throw new ReviewNotFoundException("No reviews found.");
                 }
-            }
-            catch (ReviewNotFoundException e) { WriteCentered(e.Message); }
-            try
-            {
+
                 string moviename = ReadCentered("Enter movie name to update review: ");
+                if(moviename == "EXIT") { return; }
                 var existingReview = Reviews.FirstOrDefault(r => r.CustomerName == customer.Name && r.MovieTitle == moviename);
 
                 if (existingReview == null)
                 {
                     throw new ReviewNotFoundException("No existing review found for this movie.");
                 }
-                Console.WriteLine();
+
                 WriteCentered("Existing Review:");
                 WriteCentered($"Movie : {existingReview.MovieTitle}");
                 WriteCentered($"Rating : {existingReview.Rating}");
                 WriteCentered($"Review : {existingReview.Review}\n");
+
                 string ratingInput = ReadCentered("Update your rating (1-5): ");
+                if(ratingInput == "EXIT") { return; }
                 if (!double.TryParse(ratingInput, out double rating) || rating < 1 || rating > 5)
                 {
                     throw new InvalidRatingException("Invalid rating. Must be between 1 and 5.");
                 }
 
                 string review = ReadCentered("Update your review: ");
+                if(review == "EXIT") { return; }
                 existingReview.Rating = rating;
                 existingReview.Review = review;
-                WriteCentered("Your review has been updated successfully!");
+                WriteCentered("Review updated successfully!");
             }
-            catch (ReviewNotFoundException e)
-            {
-                WriteCentered(e.Message);
-                return;
-            }
-            catch (InvalidRatingException e)
-            {
-                WriteCentered(e.Message);
-            }
-            catch (Exception e)
-            {
-                WriteCentered("An unexpected error occurred: " + e.Message);
-            }
+            catch (Exception e) { WriteCentered(e.Message); WriteCentered("Enter any key to exit:"); return; }
         }
 
         public static void RemoveReview()
         {
             try
             {
+                WriteCentered("**Press (EXIT) to exit**\n");
                 if (Reviews.Count == 0)
                 {
                     throw new ReviewNotFoundException("No reviews found.");
                 }
                 for (int i = 0; i < Reviews.Count; i++)
                 {
-                    WriteCentered($"{i + 1}. {Reviews[i].CustomerName}\n{Reviews[i].MovieTitle} - {Reviews[i].Rating}/5\n{Reviews[i].Review}\n");
+                    WriteCentered($"{i + 1}. {Reviews[i].CustomerName}\n");
+                    WriteCentered($"{Reviews[i].MovieTitle} - {Reviews[i].Rating}/5\n");
+                    WriteCentered($"{Reviews[i].Review}\n");
                 }
                 string revnoInput = ReadCentered("Enter the review number to remove:");
+                if(revnoInput == "EXIT")
+                {
+                    return;
+                }
                 if (!int.TryParse(revnoInput, out int revno) || revno < 1 || revno > Reviews.Count)
                 {
                     throw new InvalidReviewNumberException("Invalid review number. Try again.");
@@ -200,16 +190,9 @@ namespace BookMyShow.Implementations
                 Reviews.RemoveAt(revno - 1);
                 WriteCentered("Review removed successfully!");
             }
-            catch (ReviewNotFoundException e)
-            {
-                WriteCentered(e.Message);
-                return;
-            }
-            catch (InvalidReviewNumberException e)
-            {
-                WriteCentered(e.Message);
-                return;
-            }
+            catch (ReviewNotFoundException e) { WriteCentered(e.Message); }
+            catch(InvalidReviewNumberException e) { WriteCentered(e.Message); }
+            catch (Exception e) { WriteCentered("An unexpected error occurred: " + e.Message); }
         }
 
         public static void ViewReview()
@@ -220,18 +203,15 @@ namespace BookMyShow.Implementations
                 {
                     throw new ReviewNotFoundException("No reviews found.");
                 }
+                WriteCentered("Review List:\n\n");
                 foreach (var review in Reviews)
                 {
-                    WriteCentered($"\n{review.CustomerName}:");
-                    WriteCentered($"\n{review.MovieTitle} - {review.Rating}/5");
-                    WriteCentered($"{review.Review}");
+                    WriteCentered($"{review.CustomerName}:\n");
+                    WriteCentered($"\n{review.MovieTitle} - {review.Rating}/5\n");
+                    WriteCentered($"{review.Review}\n");
                 }
             }
-            catch (ReviewNotFoundException e)
-            {
-                WriteCentered(e.Message);
-                return;
-            }
+            catch (ReviewNotFoundException e) { WriteCentered(e.Message); }
         }
     }
 }

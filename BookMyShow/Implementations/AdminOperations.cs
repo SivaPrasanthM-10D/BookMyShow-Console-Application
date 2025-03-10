@@ -1,11 +1,10 @@
-﻿using BookMyShow.Models;
-using BookMyShow.Custom_Exceptions;
+﻿using BookMyShow.Custom_Exceptions;
+using BookMyShow.Models;
 namespace BookMyShow.Implementations
 {
     public static class AdminOperations
     {
         private static List<Movie> Movies = new List<Movie>();
-        private static List<Screen> Screens = new List<Screen>();
         private static List<Theatre> Theatres = new List<Theatre>();
         private static Dictionary<string, double> Coupons = new Dictionary<string, double>();
 
@@ -17,6 +16,15 @@ namespace BookMyShow.Implementations
             Console.WriteLine(new string(' ', spaces) + text);
         }
 
+        private static string ReadCentered(string prompt)
+        {
+            int windowWidth = 168;
+            int textLength = prompt.Length;
+            int spaces = (windowWidth - textLength) / 2;
+            Console.Write(new string(' ', spaces) + prompt);
+            return Console.ReadLine();
+        }
+
         public static void AddMovie(string title, string genre, int duration)
         {
             try
@@ -26,7 +34,8 @@ namespace BookMyShow.Implementations
                     throw new ArgumentException("Invalid movie details provided.");
                 }
                 Movies.Add(new Movie(title, genre, duration));
-                WriteCentered("Movie Added Successfully.");
+                Console.WriteLine();
+                WriteCentered("Movie added successfully!");
             }
             catch (Exception ex)
             {
@@ -34,23 +43,7 @@ namespace BookMyShow.Implementations
             }
         }
 
-        public static void AddScreen(int screenNumber)
-        {
-            try
-            {
-                if (screenNumber <= 0)
-                {
-                    throw new ArgumentException("Invalid screen number.");
-                }
-                Screens.Add(new Screen(screenNumber));
-            }
-            catch (Exception ex)
-            {
-                WriteCentered($"Error: {ex.Message}");
-            }
-        }
-
-        public static void AddTheatre(string name, string city, string street, int numScreens)
+        public static void AddTheatre(TheatreOwner theatreOwner, string name, string city, string street, int numScreens)
         {
             try
             {
@@ -63,11 +56,48 @@ namespace BookMyShow.Implementations
                 {
                     theatre.Screens.Add(new Screen(i));
                 }
-                Theatres.Add(theatre);
+                theatreOwner.OwnedTheatre = theatre;
+                Console.WriteLine();
+                WriteCentered("Theatre added successfully!");
             }
             catch (Exception ex)
             {
                 WriteCentered($"Error: {ex.Message}");
+                return;
+            }
+        }
+
+        public static void RemoveTheatre(string theatreName)
+        {
+            try
+            {
+                Theatre? theatre = GetTheatres().Find(t => t.Name.Equals(theatreName, StringComparison.OrdinalIgnoreCase));
+                if (theatre == null)
+                {
+                    throw new TheatreNotFoundException("Theatre not found.");
+                }
+
+                foreach (var screen in theatre.Screens)
+                {
+                    foreach (var show in screen.Shows)
+                    {
+                        BookingSystem.RemoveBookings(show);
+                    }
+                }
+
+                GetTheatres().Remove(theatre);
+                foreach (var owner in UserManagement.GetTheatreOwners())
+                {
+                    if (owner.OwnedTheatre == theatre)
+                    {
+                        owner.OwnedTheatre = null;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteCentered($"Error: {ex.Message}");
+                return;
             }
         }
 
@@ -78,7 +108,34 @@ namespace BookMyShow.Implementations
 
         public static List<Theatre> GetTheatres()
         {
-            return Theatres;
+            List<Theatre> updatedTheatres = new List<Theatre>();
+
+            foreach (var owner in UserManagement.GetTheatreOwners())
+            {
+                if (owner.OwnedTheatre != null)
+                {
+                    if (!updatedTheatres.Any(t => t.Name == owner.OwnedTheatre.Name && t.City == owner.OwnedTheatre.City))
+                    {
+                        updatedTheatres.Add(owner.OwnedTheatre);
+                    }
+                }
+            }
+
+            return updatedTheatres;
+        }
+
+
+        public static List<Show> GetShows()
+        {
+            List<Show> shows = new List<Show>();
+            foreach (Theatre theatre in GetTheatres().Distinct())
+            {
+                foreach (Screen screen in theatre.Screens)
+                {
+                    shows.AddRange(screen.Shows);
+                }
+            }
+            return shows;
         }
 
         public static Dictionary<string, double> GetCoupons()
@@ -86,29 +143,36 @@ namespace BookMyShow.Implementations
             return Coupons;
         }
 
-        public static bool ShowExists(string theatreName, int screenNo, DateTime showTime, DateTime showDate)
-        {
-            Theatre? theatre = Theatres.Find(t => t.Name.Equals(theatreName, StringComparison.OrdinalIgnoreCase));
-            if (theatre == null)
-            {
-                throw new TheatreNotFoundException("Theatre not found.");
-            }
-
-            Screen? screen = theatre.Screens.Find(s => s.ScreenNumber == screenNo);
-            if (screen == null)
-            {
-                throw new ScreenNotFoundException(screenNo, theatre.Name);
-            }
-
-            return screen.Shows.Any(s => s.ShowTime == showTime.ToString() && s.ShowDate == showDate.ToString());
-        }
-
-        public static void AddShow(string theatreName, int screenNo, string movieTitle, DateTime showTime, DateTime showDate, int availableSeats, double ticketPrice)
+        public static bool ShowExists(TheatreOwner theatreOwner, string theatreName, int screenNo, DateTime showTime, DateTime showDate)
         {
             try
             {
+                Screen? screen = theatreOwner.OwnedTheatre.Screens.Find(s => s.ScreenNumber == screenNo);
+                if (screen == null)
+                {
+                    throw new ScreenNotFoundException(screenNo, theatreOwner.OwnedTheatre.Name);
+                }
+
+                return screen.Shows.Any(s => s.ShowTime == showTime.ToString("hh:mm tt") && s.ShowDate == showDate.ToString("dd/MM/yyyy"));
+            }
+            catch (ScreenNotFoundException ex)
+            {
+                WriteCentered(ex.Message);
+                return false;
+            }
+        }
+
+        public static void AddShow(TheatreOwner theatreOwner, string theatreName, int screenNo, string movieTitle, DateTime showTime, DateTime showDate, int totalseats, List<int> availableSeats, double ticketPrice)
+        {
+            try
+            {
+                if (ShowExists(theatreOwner, theatreName, screenNo, showTime, showDate))
+                {
+                    throw new DuplicateShowException("A show already exists for the same date and time.");
+                }
+
                 Movie? movie = Movies.Find(m => m.Title.Equals(movieTitle, StringComparison.OrdinalIgnoreCase));
-                Theatre? theatre = Theatres.Find(t => t.Name.Equals(theatreName, StringComparison.OrdinalIgnoreCase));
+                Theatre? theatre = GetTheatres().Find(t => t.Name.Equals(theatreName, StringComparison.OrdinalIgnoreCase));
 
                 if (movie == null)
                 {
@@ -126,48 +190,90 @@ namespace BookMyShow.Implementations
                     throw new ScreenNotFoundException(screenNo, theatre.Name);
                 }
 
-                if (availableSeats < 0 || ticketPrice < 0)
+                if (availableSeats.Count == 0 || ticketPrice < 0)
                 {
                     throw new ArgumentException("Invalid show details provided.");
                 }
 
-                screen.Shows.Add(new Show(movie, showTime, showDate, availableSeats, theatre, ticketPrice));
-                WriteCentered($"Show successfully added: {movie.Title} at {theatre.Name}, Screen {screenNo}");
+                Show newShow = new Show(movie, showTime, showDate, totalseats, availableSeats, theatre, ticketPrice);
+
+                foreach (var th in GetTheatres())
+                {
+
+                    Screen? TheatreScreen = th.Screens.Find(s => s.ScreenNumber == screenNo);
+                    if (TheatreScreen != null)
+                    {
+                        bool showExists = TheatreScreen.Shows.Any(show =>
+                                                show.Movie.Title.Equals(newShow.Movie.Title, StringComparison.OrdinalIgnoreCase) &&
+                                                show.ShowTime == newShow.ShowTime &&
+                                                show.ShowDate == newShow.ShowDate &&
+                                                show.Theatre.Name.Equals(newShow.Theatre.Name, StringComparison.OrdinalIgnoreCase) &&
+                                                show.TicketPrice == newShow.TicketPrice);
+
+                        if (!showExists)
+                        {
+                            TheatreScreen.Shows.Add(newShow);
+                        }
+                    }
+
+                }
+
+
+                foreach (var owner in UserManagement.GetTheatreOwners())
+                {
+                    if (owner.OwnedTheatre == theatre)
+                    {
+                        Screen? ownerScreen = owner.OwnedTheatre.Screens.Find(s => s.ScreenNumber == screenNo);
+                        if (ownerScreen != null)
+                        {
+
+                            ownerScreen.Shows.Add(newShow);
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
                 WriteCentered($"Error: {ex.Message}");
+                ReadCentered("Enter any key to exit:");
+                return;
             }
         }
 
-        public static void RemoveShow(string theatreName, int screenNo, string movieTitle, DateTime showTime)
+        public static void RemoveShow(string theatreName, int screenNumber, string movieTitle, DateTime showTime, DateTime showDate)
         {
-            try
+            Theatre? theatre = GetTheatres().FirstOrDefault(t => t.Name.Equals(theatreName, StringComparison.OrdinalIgnoreCase));
+            if (theatre == null)
             {
-                Theatre? theatre = Theatres.Find(t => t.Name.Equals(theatreName, StringComparison.OrdinalIgnoreCase));
-                if (theatre == null)
-                {
-                    throw new TheatreNotFoundException("Theatre not found.");
-                }
-
-                Screen? screen = theatre.Screens.Find(s => s.ScreenNumber == screenNo);
-                if (screen == null)
-                {
-                    throw new ScreenNotFoundException(screenNo, theatre.Name);
-                }
-
-                Show? show = screen.Shows.Find(s => s.Movie.Title.Equals(movieTitle, StringComparison.OrdinalIgnoreCase) && s.ShowTime == showTime.ToString());
-                if (show == null)
-                {
-                    throw new ShowNotFoundException("Show not found.");
-                }
-
-                screen.Shows.Remove(show);
-                WriteCentered($"Show successfully removed: {movieTitle} at {theatre.Name}, Screen {screenNo}");
+                throw new Exception("Theatre not found.");
             }
-            catch (Exception ex)
+
+            Screen? screen = theatre.Screens.FirstOrDefault(s => s.ScreenNumber == screenNumber);
+            if (screen == null)
             {
-                WriteCentered($"Error: {ex.Message}");
+                throw new Exception("Screen not found.");
+            }
+
+            Show? show = screen.Shows.FirstOrDefault(s => s.Movie.Title.Equals(movieTitle, StringComparison.OrdinalIgnoreCase) &&
+                                                          s.ShowTime.Equals(showTime.ToString("hh:mm tt")) &&
+                                                          s.ShowDate.Equals(showDate.ToString("dd/MM/yyyy")));
+            if (show == null)
+            {
+                throw new Exception("Show not found.");
+            }
+
+            screen.Shows.Remove(show);
+
+            foreach (var owner in UserManagement.GetTheatreOwners())
+            {
+                if (owner.OwnedTheatre == theatre)
+                {
+                    Screen? ownerScreen = owner.OwnedTheatre.Screens.Find(s => s.ScreenNumber == screenNumber);
+                    if (ownerScreen != null)
+                    {
+                        ownerScreen.Shows.Remove(show);
+                    }
+                }
             }
         }
 
@@ -184,31 +290,13 @@ namespace BookMyShow.Implementations
                     throw new DuplicateCouponException("Coupon already exists.");
                 }
                 Coupons[code] = discount;
-                WriteCentered("Coupon added successfully!");
             }
             catch (Exception ex)
             {
                 WriteCentered($"Error: {ex.Message}");
             }
         }
-        public static void RemoveTheatre(string theatreName)
-        {
-            try
-            {
-                Theatre? theatre = Theatres.Find(t => t.Name.Equals(theatreName, StringComparison.OrdinalIgnoreCase));
-                if (theatre == null)
-                {
-                    throw new TheatreNotFoundException("Theatre not found.");
-                }
 
-                Theatres.Remove(theatre);
-                WriteCentered($"Theatre successfully removed: {theatreName}");
-            }
-            catch (Exception ex)
-            {
-                WriteCentered($"Error: {ex.Message}");
-            }
-        }
 
         public static void RemoveMovie(string movieTitle)
         {
@@ -220,13 +308,52 @@ namespace BookMyShow.Implementations
                     throw new MovieNotFoundException("Movie not found.");
                 }
 
+                foreach (var theatre in Theatres)
+                {
+                    foreach (var screen in theatre.Screens)
+                    {
+                        screen.Shows.RemoveAll(s => s.Movie.Title.Equals(movieTitle, StringComparison.OrdinalIgnoreCase));
+                    }
+                }
+
                 Movies.Remove(movie);
-                WriteCentered($"Movie successfully removed: {movieTitle}");
+
+                foreach (var owner in UserManagement.GetTheatreOwners())
+                {
+                    if (owner.OwnedTheatre != null)
+                    {
+                        foreach (var screen in owner.OwnedTheatre.Screens)
+                        {
+                            screen.Shows.RemoveAll(s => s.Movie.Title.Equals(movieTitle, StringComparison.OrdinalIgnoreCase));
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
                 WriteCentered($"Error: {ex.Message}");
             }
+        }
+
+        public static bool DisplayShows(TheatreOwner theatreOwner)
+        {
+            Theatre theatre = theatreOwner.OwnedTheatre;
+            if (theatre != null)
+            {
+                bool showAvailable = false;
+                foreach (Screen screen in theatre.Screens)
+                {
+                    WriteCentered($"Screen Number: {screen.ScreenNumber}:");
+                    foreach (Show show in screen.Shows.Distinct())
+                    {
+                        WriteCentered($"Movie: {show.Movie.Title}, Show Time: {show.ShowTime}, Show Date: {show.ShowDate}, Total Seats : {show.TotalSeats}, Available Seats: {show.AvailableSeats.Count}, Ticket Price: Rs {show.TicketPrice}");
+                        showAvailable = true;
+                    }
+                    Console.WriteLine();
+                }
+                return showAvailable;
+            }
+            return false;
         }
     }
 }

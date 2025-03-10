@@ -16,7 +16,7 @@
         }
         public static void WriteCentered(string text)
         {
-            int windowWidth = Console.WindowWidth;
+            int windowWidth = 168;
             int textLength = text.Length;
             int spaces = (windowWidth - textLength) / 2;
             Console.WriteLine(new string(' ', spaces) + text);
@@ -39,20 +39,37 @@
         }
     }
 
+    public class TheatreOwner : User
+    {
+        public Theatre? OwnedTheatre;
+        public TheatreOwner(string id, string password, string name, string phoneNo) : base(id, password, name, phoneNo)
+        {
+        }
+        public override void DisplayUserInfo()
+        {
+            WriteCentered($"Theatre Owner Info:");
+            WriteCentered($"ID: {Id}");
+            WriteCentered($"Name: {Name}");
+            WriteCentered($"Phone No: {PhoneNo}");
+            WriteCentered("Owned Theatre:");
+            if (OwnedTheatre != null)
+            {
+                WriteCentered($"Name : {OwnedTheatre.Name} | Address : {OwnedTheatre.Street}, {OwnedTheatre.City}");
+            }
+            else
+            {
+                WriteCentered("No theatre is owned!\n");
+            }
+        }
+    }
+
+
     public class Customer : User
     {
         public List<Ticket> BookedTickets = new List<Ticket>();
-        public string UpiId;
-        public int UpiPin;
-
-        public Customer(string id, string password, string name, string phoneNo, string upiid, string upipin) : base(id, password, name, phoneNo)
+        public List<string> upipins = ["876543", "123456", "567890", "987654"];
+        public Customer(string id, string password, string name, string phoneNo) : base(id, password, name, phoneNo)
         {
-            if (!int.TryParse(upipin, out int pin) || (pin < 100000 || pin > 999999))
-            {
-                throw new ArgumentException("UPI Pin must be a 6 digit number.");
-            }
-            UpiId = upiid;
-            UpiPin = pin;
         }
 
         public override void DisplayUserInfo()
@@ -61,7 +78,6 @@
             WriteCentered($"ID: {Id}");
             WriteCentered($"Name: {Name}");
             WriteCentered($"Phone No: {PhoneNo}");
-            WriteCentered($"UPI ID: {UpiId}");
             WriteCentered("Booked Tickets:");
             foreach (var ticket in BookedTickets)
             {
