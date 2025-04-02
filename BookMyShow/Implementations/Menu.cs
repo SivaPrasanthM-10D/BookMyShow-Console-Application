@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 using BookMyShow.Custom_Exceptions;
 using BookMyShow.Interfaces;
 using BookMyShow.Models;
@@ -641,7 +642,8 @@ namespace BookMyShow.Implementations
                 WriteCentered("1. Add Theatre");
                 WriteCentered("2. Remove Theatre");
                 WriteCentered("3. Add Show");
-                WriteCentered("4. Remove Show");
+                //WriteCentered("4. Remove Show");
+                WriteCentered("4. View Shows");
                 WriteCentered("5. View Reviews");
                 WriteCentered("6. View Profile");
                 WriteCentered("7. Logout");
@@ -653,16 +655,37 @@ namespace BookMyShow.Implementations
                         Console.Clear();
                         try
                         {
+                            string tname, street, city, sn;
                             WriteCentered("**Enter (EXIT) to exit**\n");
                             if (theatreOwner.OwnedTheatre != null) { throw new DuplicateMovieException("You already own a theatre!"); }
-                            string tname = ReadCentered("Enter theatre name:");
-                            if (tname == "EXIT" || string.IsNullOrEmpty(tname)) { break; }
-                            string street = ReadCentered("Enter street:");
-                            if (street == "EXIT" || string.IsNullOrEmpty(street)) { break; }
-                            string city = ReadCentered("Enter city:");
-                            if (city == "EXIT" || string.IsNullOrEmpty(city)) { break; }
-                            string sn = ReadCentered("Enter number of screens:");
-                            if (sn == "EXIT" || string.IsNullOrEmpty(sn)) { break; }
+                            while (true)
+                            {
+                                tname = ReadCentered("Enter theatre name:");
+                                if (string.IsNullOrEmpty(tname)) { throw new InvalidTheatreNameException("Theatre Name cannot be empty."); }
+                                else break;
+                            }
+                            if (tname == "EXIT") { break; }
+                            while (true)
+                            {
+                                street = ReadCentered("Enter street:");
+                                if (string.IsNullOrEmpty(street)) { throw new InvalidStreetException("Street cannot be empty."); }
+                                else break;
+                            }
+                            if (street == "EXIT") { break; }
+                            while (true)
+                            {
+                                city = ReadCentered("Enter city:");
+                                if (string.IsNullOrEmpty(city)) { throw new InvalidCityException("City cannot be empty."); }
+                                else break;
+                            }
+                            if (city == "EXIT") { break; }
+                            while (true)
+                            {
+                                sn = ReadCentered("Enter number of screens:");
+                                if (string.IsNullOrEmpty(sn)) { throw new InvalidScreenNumberException("Screen number cannot be empty."); }
+                                else break;
+                            }
+                            if (sn == "EXIT") { break; }
                             int seno = int.Parse(sn);
                             AdminOperations.AddTheatre(theatreOwner, tname, city, street, seno);
                             ReadCentered("Press any key to exit:");
@@ -679,6 +702,11 @@ namespace BookMyShow.Implementations
                             WriteCentered($"Number of Screens: {theatreOwner.OwnedTheatre.Screens.Count}\n");
                             ReadCentered("Press any key to exit:");
                             break;
+                        }
+                        catch(Exception e)
+                        {
+                            WriteCentered(e.Message);
+                            ReadCentered("Press any key to retry:");
                         }
                         break;
                     case "2":
@@ -699,9 +727,7 @@ namespace BookMyShow.Implementations
                             if (confirm.ToLower() == "yes")
                             {
                                 AdminOperations.RemoveTheatre(theatreOwner.OwnedTheatre.Name);
-                                theatreOwner.OwnedTheatre = null;
                                 Console.WriteLine();
-                                WriteCentered($"Theatre is successfully removed!");
                                 ReadCentered("Press any key to exit:");
                             }
                             else
@@ -711,6 +737,183 @@ namespace BookMyShow.Implementations
                             }
                         }
                         break;
+                    //case "3":
+                    //    try
+                    //    {
+                    //        Console.Clear();
+                    //        if (theatreOwner.OwnedTheatre == null)
+                    //        {
+                    //            WriteCentered("No theatre owned.");
+                    //            ReadCentered("Press any key to exit:");
+                    //            break;
+                    //        }
+
+                    //        WriteCentered("**Enter (EXIT) to exit**\n");
+                    //        WriteCentered("***Add Show***\n");
+                    //        WriteCentered($"{theatreOwner.OwnedTheatre.Name} - {theatreOwner.OwnedTheatre.Screens.Count} screens");
+
+                    //        WriteCentered("Available Movies:");
+                    //        foreach (var mv in AdminOperations.GetMovies())
+                    //        {
+                    //            WriteCentered($"{mv.Title}");
+                    //        }
+
+                    //        string stname = theatreOwner.OwnedTheatre.Name;
+                    //        string sn;
+                    //        while (true)
+                    //        {
+                    //            sn = ReadCentered("Enter screen number:");
+                    //            if (string.IsNullOrEmpty(sn)) { throw new InvalidScreenNumberException("Screen number cannot be empty."); }
+                    //            else break;
+                    //        }
+                    //        if (sn == "EXIT") { break; }
+                    //        int ssno = int.Parse(sn);
+
+                    //        string stitle;
+                    //        while (true)
+                    //        {
+                    //            stitle = ReadCentered("Enter movie title:");
+                    //            if (string.IsNullOrEmpty(stitle)) { throw new InvalidMovieException("Movie title cannot be empty."); }
+                    //            else break;
+                    //        }
+                    //        if (stitle == "EXIT") { break; }
+
+                    //        string startDateStr;
+                    //        while (true)
+                    //        {
+                    //            startDateStr = ReadCentered("Enter start date (DD/MM/YYYY):");
+                    //            if (string.IsNullOrEmpty(startDateStr)) { throw new InvalidShowDateException("Start date cannot be empty."); }
+                    //            else break;
+                    //        }
+                    //        if (startDateStr == "EXIT") { break; }
+
+                    //        string endDateStr;
+                    //        while (true)
+                    //        {
+                    //            endDateStr = ReadCentered("Enter end date (DD/MM/YYYY):");
+                    //            if (string.IsNullOrEmpty(endDateStr)) { throw new InvalidShowDateException("End date cannot be empty."); }
+                    //            else break;
+                    //        }
+                    //        if (endDateStr == "EXIT") { break; }
+
+                    //        DateTime.TryParseExact(startDateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime startDate);
+                    //        DateTime.TryParseExact(endDateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime endDate);
+
+                    //        string st;
+                    //        DateTime stime;
+                    //        List<string> showtimings = new List<string> { "10:30 AM", "02:30 PM", "06:30 PM", "10:30 PM" };
+                    //        StringBuilder stimings = new StringBuilder();
+
+                    //        foreach (var time in showtimings)
+                    //        {
+                    //            DateTime parsedTime;
+                    //            if (DateTime.TryParseExact(time, "hh:mm tt", null, System.Globalization.DateTimeStyles.None, out parsedTime)) { }
+                    //            bool isUnavailable = false;
+                    //            for (DateTime date = startDate; date <= endDate; date = date.AddDays(1))
+                    //            {
+                    //                if (AdminOperations.ShowExists(theatreOwner, stname, ssno, parsedTime, date))
+                    //                {
+                    //                    isUnavailable = true;
+                    //                    break;
+                    //                }
+                    //            }
+                    //            if (isUnavailable)
+                    //            {
+                    //                stimings.Append($"{time} (Unavailable) | ");
+                    //            }
+                    //            else
+                    //            {
+                    //                stimings.Append($"{time} | ");
+                    //            }
+                    //        }
+
+                    //        while (true)
+                    //        {
+                    //            WriteCentered(stimings.ToString().TrimEnd(' ', '|'));
+                    //            st = ReadCentered("Enter show time (HH:MM AM/PM):");
+                    //            if (st == "EXIT" || string.IsNullOrEmpty(st)) { break; }
+                    //            if (!DateTime.TryParseExact(st, "hh:mm tt", null, System.Globalization.DateTimeStyles.None, out stime) ||
+                    //                !showtimings.Contains(st))
+                    //            {
+                    //                throw new InvalidShowtimeException("Invalid show time. Allowed show times are 10:30 AM, 02:30 PM, 06:30 PM, and 10:30 PM.");
+                    //            }
+
+                    //            bool isShowAvailable = true;
+                    //            for (DateTime date = startDate; date <= endDate; date = date.AddDays(1))
+                    //            {
+                    //                if (AdminOperations.ShowExists(theatreOwner, stname, ssno, stime, date))
+                    //                {
+                    //                    isShowAvailable = false;
+                    //                    break;
+                    //                }
+                    //            }
+
+                    //            if (!isShowAvailable)
+                    //            {
+                    //                WriteCentered("Could not add show. Show time is unavailable for the selected dates.");
+                    //                ReadCentered("Press any key to exit:");
+                    //                break;
+                    //            }
+                    //            else
+                    //            {
+                    //                break;
+                    //            }
+                    //        }
+
+                    //        string seatstr;
+                    //        int savlseats;
+                    //        while (true)
+                    //        {
+                    //            seatstr = ReadCentered("Enter available seats (100 - 160):");
+                    //            if (string.IsNullOrEmpty(seatstr)) { throw new InvalidSeatNoException("Available seats cannot be empty."); }
+                    //            if (!int.TryParse(seatstr, out savlseats) || savlseats > 160 || savlseats < 100)
+                    //            {
+                    //                throw new InvalidSeatNoException("Invalid input! Valid total seat number between 100 and 160.");
+                    //            }
+                    //            else
+                    //            {
+                    //                break;
+                    //            }
+                    //        }
+                    //        List<int> savailableseats = new List<int>();
+                    //        for (int i = 1; i <= savlseats; i++)
+                    //        {
+                    //            savailableseats.Add(i);
+                    //        }
+
+                    //        string tkprstr;
+                    //        while (true)
+                    //        {
+                    //            tkprstr = ReadCentered("Enter ticket price:");
+                    //            if (string.IsNullOrEmpty(tkprstr)) { throw new InvalidTicketPriceException("Ticket price cannot be empty."); }
+                    //            else break;
+                    //        }
+                    //        if (tkprstr == "EXIT") { break; }
+                    //        double tktprice = double.Parse(tkprstr);
+
+                    //        for (DateTime date = startDate; date <= endDate; date = date.AddDays(1))
+                    //        {
+                    //            if (AdminOperations.ShowExists(theatreOwner, stname, ssno, stime, date))
+                    //            {
+                    //                WriteCentered($"Show already exists on {date:dd/MM/yyyy} at {stime:hh:mm tt}");
+                    //                ReadCentered("Press any key to skip adding this show and continue with the next date:");
+                    //                continue;
+                    //            }
+                    //            else
+                    //            {
+                    //                AdminOperations.AddShow(theatreOwner, stname, ssno, stitle, stime, date, savlseats, savailableseats, tktprice);
+                    //            }
+                    //        }
+                    //        WriteCentered($"Show successfully added: {stitle} at {stname}, Screen {ssno} - Show Time : {stime:hh:mm tt}({startDate:dd/MM/yyyy} - {endDate:dd/MM/yyyy})");
+                    //        ReadCentered("Press any key to exit:");
+                    //    }
+                    //    catch (InvalidScreenNumberException e) { WriteCentered($"{e.Message}"); }
+                    //    catch (InvalidMovieException e) { WriteCentered($"{e.Message}"); }
+                    //    catch (InvalidShowDateException e) { WriteCentered($"{e.Message}"); }
+                    //    catch (InvalidShowtimeException e) { WriteCentered($"{e.Message}"); }
+                    //    catch (InvalidSeatNoException e) { WriteCentered($"{e.Message}"); }
+                    //    catch (InvalidTicketPriceException e) { WriteCentered($"{e.Message}"); }
+                    //    break;
                     case "3":
                         try
                         {
@@ -723,7 +926,8 @@ namespace BookMyShow.Implementations
                             }
 
                             WriteCentered("**Enter (EXIT) to exit**\n");
-                            WriteCentered($"{theatreOwner.OwnedTheatre.Name} - {theatreOwner.OwnedTheatre.Screens.Count} screens");
+                            WriteCentered("***Add Show***\n");
+                            WriteCentered($"{theatreOwner.OwnedTheatre.Name} - {theatreOwner.OwnedTheatre.Screens.Count} screen(s)");
 
                             WriteCentered("Available Movies:");
                             foreach (var mv in AdminOperations.GetMovies())
@@ -732,17 +936,46 @@ namespace BookMyShow.Implementations
                             }
 
                             string stname = theatreOwner.OwnedTheatre.Name;
-                            string sn = ReadCentered("Enter screen number:");
-                            if (sn == "EXIT" || string.IsNullOrEmpty(sn)) { goto theatreownermenu; }
+                            string sn;
+                            while (true)
+                            {
+                                sn = ReadCentered("Enter screen number:");
+                                if (string.IsNullOrEmpty(sn)) { throw new InvalidScreenNumberException("Screen number cannot be empty."); }
+                                else break;
+                            }
+                            if (sn == "EXIT") { break; }
                             int ssno = int.Parse(sn);
-                            string stitle = ReadCentered("Enter movie title:");
-                            if (stitle == "EXIT" || string.IsNullOrEmpty(stitle)) { goto theatreownermenu; }
-                            string startDateStr = ReadCentered("Enter start date (DD/MM/YYYY):");
-                            if (startDateStr == "EXIT" || string.IsNullOrEmpty(startDateStr)) { goto theatreownermenu; }
-                            string endDateStr = ReadCentered("Enter end date (DD/MM/YYYY):");
-                            if (endDateStr == "EXIT" || string.IsNullOrEmpty(endDateStr)) { goto theatreownermenu; }
+
+                            string stitle;
+                            while (true)
+                            {
+                                stitle = ReadCentered("Enter movie title:");
+                                if (string.IsNullOrEmpty(stitle)) { throw new InvalidMovieException("Movie title cannot be empty."); }
+                                else break;
+                            }
+                            if (stitle == "EXIT") { break; }
+
+                            string startDateStr;
+                            while (true)
+                            {
+                                startDateStr = ReadCentered("Enter start date (DD/MM/YYYY):");
+                                if (string.IsNullOrEmpty(startDateStr)) { throw new InvalidShowDateException("Start date cannot be empty."); }
+                                else break;
+                            }
+                            if (startDateStr == "EXIT") { break; }
+
+                            string endDateStr;
+                            while (true)
+                            {
+                                endDateStr = ReadCentered("Enter end date (DD/MM/YYYY):");
+                                if (string.IsNullOrEmpty(endDateStr)) { throw new InvalidShowDateException("End date cannot be empty."); }
+                                else break;
+                            }
+                            if (endDateStr == "EXIT") { break; }
+
                             DateTime.TryParseExact(startDateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime startDate);
                             DateTime.TryParseExact(endDateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime endDate);
+
                             string st;
                             DateTime stime;
                             List<string> showtimings = new List<string> { "10:30 AM", "02:30 PM", "06:30 PM", "10:30 PM" };
@@ -775,7 +1008,7 @@ namespace BookMyShow.Implementations
                             {
                                 WriteCentered(stimings.ToString().TrimEnd(' ', '|'));
                                 st = ReadCentered("Enter show time (HH:MM AM/PM):");
-                                if (st == "EXIT" || string.IsNullOrEmpty(st)) { goto theatreownermenu; }
+                                if (st == "EXIT" || string.IsNullOrEmpty(st)) { break; }
                                 if (!DateTime.TryParseExact(st, "hh:mm tt", null, System.Globalization.DateTimeStyles.None, out stime) ||
                                     !showtimings.Contains(st))
                                 {
@@ -796,19 +1029,20 @@ namespace BookMyShow.Implementations
                                 {
                                     WriteCentered("Could not add show. Show time is unavailable for the selected dates.");
                                     ReadCentered("Press any key to exit:");
-                                    goto theatreownermenu;
+                                    break;
                                 }
                                 else
                                 {
                                     break;
                                 }
                             }
+
                             string seatstr;
                             int savlseats;
                             while (true)
                             {
                                 seatstr = ReadCentered("Enter available seats (100 - 160):");
-                                if (seatstr == "EXIT" || string.IsNullOrEmpty(seatstr)) { goto theatreownermenu; }
+                                if (string.IsNullOrEmpty(seatstr)) { throw new InvalidSeatNoException("Available seats cannot be empty."); }
                                 if (!int.TryParse(seatstr, out savlseats) || savlseats > 160 || savlseats < 100)
                                 {
                                     throw new InvalidSeatNoException("Invalid input! Valid total seat number between 100 and 160.");
@@ -818,15 +1052,23 @@ namespace BookMyShow.Implementations
                                     break;
                                 }
                             }
-                            List<int> savailableseats = [];
+                            List<int> savailableseats = new List<int>();
                             for (int i = 1; i <= savlseats; i++)
                             {
                                 savailableseats.Add(i);
                             }
-                            string tkprstr = ReadCentered("Enter ticket price:");
-                            if (tkprstr == "EXIT" || string.IsNullOrEmpty(tkprstr)) { goto theatreownermenu; }
+
+                            string tkprstr;
+                            while (true)
+                            {
+                                tkprstr = ReadCentered("Enter ticket price:");
+                                if (string.IsNullOrEmpty(tkprstr)) { throw new InvalidTicketPriceException("Ticket price cannot be empty."); }
+                                else break;
+                            }
+                            if (tkprstr == "EXIT") { break; }
                             double tktprice = double.Parse(tkprstr);
 
+                            DateTime.TryParseExact(st, "hh:mm tt", null, System.Globalization.DateTimeStyles.None, out stime);
                             for (DateTime date = startDate; date <= endDate; date = date.AddDays(1))
                             {
                                 if (AdminOperations.ShowExists(theatreOwner, stname, ssno, stime, date))
@@ -843,77 +1085,245 @@ namespace BookMyShow.Implementations
                             WriteCentered($"Show successfully added: {stitle} at {stname}, Screen {ssno} - Show Time : {stime:hh:mm tt}({startDate:dd/MM/yyyy} - {endDate:dd/MM/yyyy})");
                             ReadCentered("Press any key to exit:");
                         }
-                        catch (InvalidSeatNoException e) { WriteCentered($"{e.Message}"); }
-                        catch (DuplicateShowException e) { WriteCentered($"{e.Message}"); }
+                        catch (InvalidScreenNumberException e) { WriteCentered($"{e.Message}"); }
+                        catch (InvalidMovieException e) { WriteCentered($"{e.Message}"); }
+                        catch (InvalidShowDateException e) { WriteCentered($"{e.Message}"); }
                         catch (InvalidShowtimeException e) { WriteCentered($"{e.Message}"); }
+                        catch (InvalidSeatNoException e) { WriteCentered($"{e.Message}"); }
+                        catch (InvalidTicketPriceException e) { WriteCentered($"{e.Message}"); }
                         break;
+                    //case "4":
+                    //    Console.Clear();
+                    //    if (theatreOwner.OwnedTheatre == null)
+                    //    {
+                    //        WriteCentered("No theatre owned.");
+                    //        ReadCentered("Press any key to exit:");
+                    //        break;
+                    //    }
+                    //    if (!AdminOperations.DisplayShows(theatreOwner))
+                    //    {
+                    //        WriteCentered("No shows found.");
+                    //        ReadCentered("Press any key to exit:");
+                    //        break;
+                    //    }
+                    //    WriteCentered("**Enter (EXIT) to exit**\n");
+                    //    WriteCentered("***Remove Show***\n");
+                    //    string sno = ReadCentered("Enter screen number:");
+                    //    if (sno == "EXIT" || string.IsNullOrEmpty(sno)) { break; }
+                    //    int rScreenNo = int.Parse(sno);
+                    //    string rMovieTitle = ReadCentered("Enter movie title:");
+                    //    if (rMovieTitle == "EXIT" || string.IsNullOrEmpty(rMovieTitle)) { break; }
+                    //    string rstartDateStr = ReadCentered("Enter start date (DD/MM/YYYY):");
+                    //    if (rstartDateStr == "EXIT" || string.IsNullOrEmpty(rstartDateStr)) { goto theatreownermenu; }
+                    //    string rendDateStr = ReadCentered("Enter end date (DD/MM/YYYY):");
+                    //    if (rendDateStr == "EXIT" || string.IsNullOrEmpty(rendDateStr)) { goto theatreownermenu; }
+                    //    DateTime.TryParseExact(rstartDateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime rstartDate);
+                    //    DateTime.TryParseExact(rendDateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime rendDate);
+                    //    string rST = ReadCentered("Enter show time (HH:MM AM/PM):");
+                    //    if (rST == "EXIT" || string.IsNullOrEmpty(rST)) { break; }
+                    //    DateTime.TryParseExact(rST, "hh:mm tt", null, System.Globalization.DateTimeStyles.None, out DateTime rShowTime);
+
+                    //    Screen screen = theatreOwner.OwnedTheatre.Screens.FirstOrDefault(s => s.ScreenNumber == rScreenNo);
+                    //    string formattedShowTime = rShowTime.ToString("hh:mm tt");
+                    //    //Show? show = AdminOperations.GetTheatres()
+                    //    //            .Find(t => t.Name.Equals(theatreOwner.OwnedTheatre.Name, StringComparison.OrdinalIgnoreCase))?
+                    //    //            .Screens.Find(s => s.ScreenNumber == rScreenNo)?
+                    //    //            .Shows.Find(s => s.Movie.Title.Equals(rMovieTitle, StringComparison.OrdinalIgnoreCase) && s.ShowTime == rShowTime.ToString("hh:mm tt") && s.ShowDate == rShowDate.ToString("dd/MM/yyyy"));
+
+
+                    //    List<Show> shows = screen.Shows
+                    //                        .Where(s => s.Movie.Title.Equals(rMovieTitle, StringComparison.OrdinalIgnoreCase) &&
+                    //                                    s.ShowTime.Equals(formattedShowTime, StringComparison.OrdinalIgnoreCase) &&
+                    //                                    DateTime.TryParseExact(s.ShowDate, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime showDate) &&
+                    //                                    showDate >= rstartDate && showDate <= rendDate)
+                    //                        .ToList();
+
+                    //    if (shows.Count !=0)
+                    //    {
+                    //        foreach(Show show in shows)
+                    //        {
+                    //            WriteCentered($"Movie Title: {show.Movie.Title} | Screen : {rScreenNo}| Show Time: {show.ShowTime} | Show Date: {show.ShowDate} | Total Seats: {show.TotalSeats} | Available Seats: {show.AvailableSeats.Count} | Ticket Price: ₹{show.TicketPrice}");
+                    //            WriteCentered($"");
+                    //        }
+                    //    }
+                    //    else
+                    //    {
+                    //        WriteCentered("Shows not available to remove.");
+                    //        ReadCentered("Press any key to exit:");
+                    //        goto theatreownermenu;
+                    //    }
+                    //    confirm = ReadCentered("Are you sure you want to remove this show? (yes/no):");
+                    //    if (confirm == "yes")
+                    //    {
+                    //        for (DateTime date = rstartDate; date <= rendDate; date = date.AddDays(1))
+                    //        {
+                    //            bool showExists = screen.Shows.Any(s =>
+                    //                s.Movie.Title.Equals(rMovieTitle, StringComparison.OrdinalIgnoreCase) &&
+                    //                s.ShowTime.Equals(formattedShowTime, StringComparison.OrdinalIgnoreCase) &&
+                    //                s.ShowDate.Equals(date.ToString("dd/MM/yyyy")));
+
+                    //            if (showExists)
+                    //            {
+                    //                AdminOperations.RemoveShow(theatreOwner.OwnedTheatre.Name, rScreenNo, rMovieTitle, rShowTime, date);
+                    //                WriteCentered($"Removed show on {date:dd/MM/yyyy}.");
+                    //            }
+                    //        }
+
+                    //        if (!AdminOperations.DisplayShows(theatreOwner))
+                    //        {
+                    //            WriteCentered("No shows found.");
+                    //            ReadCentered("Press any key to exit:");
+                    //            break;
+                    //        }
+                    //        ReadCentered("Press any key to exit:");
+                    //    }
+                    //    else
+                    //    {
+                    //        WriteCentered("Show removal cancelled.");
+                    //        ReadCentered("Press any key to exit:");
+                    //    }
+                    //    break;
                     case "4":
-                        Console.Clear();
-                        if (theatreOwner.OwnedTheatre == null)
+                        try
                         {
-                            WriteCentered("No theatre owned.");
-                            ReadCentered("Press any key to exit:");
-                            break;
-                        }
-                        if (!AdminOperations.DisplayShows(theatreOwner))
-                        {
-                            WriteCentered("No shows found.");
-                            ReadCentered("Press any key to exit:");
-                            break;
-                        }
-                        WriteCentered("**Enter (EXIT) to exit**\n");
-                        string sno = ReadCentered("Enter screen number:");
-                        if (sno == "EXIT" || string.IsNullOrEmpty(sno)) { break; }
-                        int rScreenNo = int.Parse(sno);
-                        string rMovieTitle = ReadCentered("Enter movie title:");
-                        if (rMovieTitle == "EXIT" || string.IsNullOrEmpty(rMovieTitle)) { break; }
-                        string rSD = ReadCentered("Enter show date (DD/MM/YYYY):");
-                        if (rSD == "EXIT" || string.IsNullOrEmpty(rSD)) { break; }
-                        DateTime.TryParseExact(rSD, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime rShowDate);
-                        string rST = ReadCentered("Enter show time (HH:MM AM/PM):");
-                        if (rST == "EXIT" || string.IsNullOrEmpty(rST)) { break; }
-                        DateTime.TryParseExact(rST, "hh:mm tt", null, System.Globalization.DateTimeStyles.None, out DateTime rShowTime);
-                        Show? show = AdminOperations.GetTheatres()
-                                    .Find(t => t.Name.Equals(theatreOwner.OwnedTheatre.Name, StringComparison.OrdinalIgnoreCase))?
-                                    .Screens.Find(s => s.ScreenNumber == rScreenNo)?
-                                    .Shows.Find(s => s.Movie.Title.Equals(rMovieTitle, StringComparison.OrdinalIgnoreCase) && s.ShowTime == rShowTime.ToString("hh:mm tt") && s.ShowDate == rShowDate.ToString("dd/MM/yyyy"));
-                        if (show != null)
-                        {
-                            var displayedShows = new HashSet<string>();
-                            string showKey = show.Movie.Title + show.ShowTime + show.ShowDate;
-                            if (!displayedShows.Contains(showKey))
+                        rmore1:
+                            Console.Clear();
+                            if (theatreOwner.OwnedTheatre == null)
                             {
-                                WriteCentered($"Movie Title: {show.Movie.Title}");
-                                WriteCentered($"Show Time: {show.ShowTime}");
-                                WriteCentered($"Show Date: {show.ShowDate}");
-                                WriteCentered($"Total Seats: {show.TotalSeats}");
-                                WriteCentered($"Available Seats: {show.AvailableSeats.Count}");
-                                WriteCentered($"Ticket Price: ₹{show.TicketPrice}");
-                                displayedShows.Add(showKey);
-                            }
-                        }
-                        else
-                        {
-                            WriteCentered("Show not available to remove.");
-                            ReadCentered("Press any key to exit:");
-                            goto theatreownermenu;
-                        }
-                        confirm = ReadCentered("Are you sure you want to remove this show? (yes/no):");
-                        if (confirm == "yes")
-                        {
-                            AdminOperations.RemoveShow(theatreOwner.OwnedTheatre.Name, rScreenNo, rMovieTitle, rShowTime, rShowDate);
-                            if (!AdminOperations.DisplayShows(theatreOwner))
-                            {
-                                WriteCentered("No shows found.");
+                                WriteCentered("No theatre owned.");
                                 ReadCentered("Press any key to exit:");
                                 break;
                             }
-                            ReadCentered("Press any key to exit:");
+                            WriteCentered("**Enter (EXIT) to exit**\n");
+                            WriteCentered("***View Shows***\n");
+                            foreach (var scr in theatreOwner.OwnedTheatre.Screens)
+                            {
+                                WriteCentered($"Screen {scr.ScreenNumber}:");
+                                if (scr.Shows.Count == 0)
+                                {
+                                    WriteCentered("No shows available");
+                                }
+                                else
+                                {
+                                    foreach (var show in scr.Shows.Distinct())
+                                    {
+                                        WriteCentered($"Movie: {show.Movie.Title} | Show Date: {show.ShowDate} | Show Time: {show.ShowTime} | Available Seats: {show.AvailableSeats.Count} | Ticket Price: Rs {show.TicketPrice}");
+                                    }
+                                }
+                                WriteCentered("");
+                            }
+                            WriteCentered("1. Remove show");
+                            WriteCentered("2. Exit");
+                            string viewChoice = ReadCentered("Enter your choice:");
+                            if (viewChoice == "1")
+                            {
+                                string vsno, vMovieTitle, vstartDateStr, vendDateStr, vST;
+                                WriteCentered("***Remove Show***\n");
+                                while (true)
+                                {
+                                    vsno = ReadCentered("Enter screen number:");
+                                    if (string.IsNullOrEmpty(vsno)) throw new InvalidScreenNumberException("Screen Number cannot be empty.");
+                                    else
+                                    {
+                                        break;
+                                    }
+                                }
+                                if (vsno == "EXIT") { goto theatreownermenu; }
+                                int vScreenNo = int.Parse(vsno);
+
+                                while (true)
+                                {
+                                    vMovieTitle = ReadCentered("Enter movie title:");
+                                    if (string.IsNullOrEmpty(vMovieTitle)) { throw new InvalidMovieException("Movie title cannot be empty."); }
+                                    else break;
+                                }
+                                if (vMovieTitle == "EXIT") { goto theatreownermenu; }
+
+                                while (true)
+                                {
+                                    vstartDateStr = ReadCentered("Enter start date (DD/MM/YYYY):");
+                                    if (string.IsNullOrEmpty(vstartDateStr)) { throw new InvalidShowDateException("Show Date cannot be empty."); }
+                                    else break;
+                                }
+                                if (vstartDateStr == "EXIT") { goto theatreownermenu; }
+
+                                while (true)
+                                {
+                                    vendDateStr = ReadCentered("Enter end date (DD/MM/YYYY):");
+                                    if (string.IsNullOrEmpty(vendDateStr)) { throw new InvalidShowDateException("Show Date cannot be empty."); }
+                                    else break;
+                                }
+                                if (vendDateStr == "EXIT") { goto theatreownermenu; }
+                                DateTime.TryParseExact(vstartDateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime vstartDate);
+                                DateTime.TryParseExact(vendDateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime vendDate);
+
+                                while (true)
+                                {
+                                    vST = ReadCentered("Enter show time (HH:MM AM/PM):");
+                                    if (string.IsNullOrEmpty(vST)) { throw new InvalidShowtimeException("Show time cannot be empty."); }
+                                    else break;
+                                }
+                                if (vST == "EXIT") { goto theatreownermenu; }
+                                DateTime.TryParseExact(vST, "hh:mm tt", null, System.Globalization.DateTimeStyles.None, out DateTime vShowTime);
+
+                                Screen vScreen = theatreOwner.OwnedTheatre.Screens.FirstOrDefault(s => s.ScreenNumber == vScreenNo);
+                                string vformattedShowTime = vShowTime.ToString("hh:mm tt");
+
+                                List<Show> vshows = vScreen.Shows
+                                                    .Where(s => s.Movie.Title.Equals(vMovieTitle, StringComparison.OrdinalIgnoreCase) &&
+                                                                s.ShowTime.Equals(vST, StringComparison.OrdinalIgnoreCase) &&
+                                                                DateTime.TryParseExact(s.ShowDate, "dd/MM/yyyy", null, DateTimeStyles.None, out DateTime showDate) &&
+                                                                showDate >= vstartDate && showDate <= vendDate)
+                                                    .ToList();
+
+                                if (vshows.Count != 0)
+                                {
+                                    WriteCentered("Shows to remove:\n");
+                                    foreach (Show show in vshows.Distinct())
+                                    {
+                                        WriteCentered($"Movie Title: {show.Movie.Title} | Screen : {vScreenNo}| Show Time: {show.ShowTime} | Show Date: {show.ShowDate} | Total Seats: {show.TotalSeats} | Available Seats: {show.AvailableSeats.Count} | Ticket Price: ₹{show.TicketPrice}");
+                                        WriteCentered($"");
+                                    }
+                                }
+                                else
+                                {
+                                    WriteCentered("Shows not available to remove.");
+                                    ReadCentered("Press any key to exit:");
+                                    goto theatreownermenu;
+                                }
+                                confirm = ReadCentered("Are you sure you want to remove this show? (yes/no):");
+                                if (confirm == "yes")
+                                {
+                                    for (DateTime date = vstartDate; date <= vendDate; date = date.AddDays(1))
+                                    {
+                                        bool showExists = vScreen.Shows.Any(s =>
+                                            s.Movie.Title.Equals(vMovieTitle, StringComparison.OrdinalIgnoreCase) &&
+                                            s.ShowTime.Equals(vformattedShowTime, StringComparison.OrdinalIgnoreCase) &&
+                                            s.ShowDate.Equals(date.ToString("dd/MM/yyyy")));
+
+                                        if (showExists)
+                                        {
+                                            AdminOperations.RemoveShow(theatreOwner.OwnedTheatre.Name, vScreenNo, vMovieTitle, vShowTime, date);
+                                            WriteCentered($"Removed show on {date:dd/MM/yyyy}.");
+                                        }
+                                    }
+                                    goto rmore1;
+                                }
+                                else
+                                {
+                                    WriteCentered("Show removal cancelled.");
+                                    ReadCentered("Press any key to exit:");
+                                    goto rmore1;
+                                }
+                            }
+                            else if (viewChoice == "2")
+                            {
+                                goto theatreownermenu;
+                            }
                         }
-                        else
+                        catch(Exception e)
                         {
-                            WriteCentered("Show removal cancelled.");
-                            ReadCentered("Press any key to exit:");
+                            WriteCentered(e.Message);
                         }
                         break;
                     case "5":
@@ -1000,16 +1410,16 @@ namespace BookMyShow.Implementations
                                 }
                                 else
                                 {
-                                        var showsGroupedByTheatre = showsOnDate.GroupBy(show => show.Theatre.Name);
-                                        foreach (var theatreGroup in showsGroupedByTheatre)
+                                    var showsGroupedByTheatre = showsOnDate.GroupBy(show => show.Theatre.Name);
+                                    foreach (var theatreGroup in showsGroupedByTheatre)
+                                    {
+                                        WriteCentered($"Theatre: {theatreGroup.Key}");
+                                        foreach (var show in theatreGroup)
                                         {
-                                            WriteCentered($"Theatre: {theatreGroup.Key}");
-                                            foreach (var show in theatreGroup)
-                                            {
-                                                WriteCentered($"  Movie: {show.Movie.Title} | Screen: {show.Theatre.Screens.First(s => s.Shows.Contains(show)).ScreenNumber} | Show Date: {show.ShowDate:dd/MM/yyyy} | Show Time: {show.ShowTime:hh:mm tt} | Available Seats: {show.AvailableSeats.Count} | Ticket Price: Rs {show.TicketPrice}");
-                                            }
-                                            WriteCentered("");
+                                            WriteCentered($"  Movie: {show.Movie.Title} | Screen: {show.Theatre.Screens.First(s => s.Shows.Contains(show)).ScreenNumber} | Show Date: {show.ShowDate:dd/MM/yyyy} | Show Time: {show.ShowTime:hh:mm tt} | Available Seats: {show.AvailableSeats.Count} | Ticket Price: Rs {show.TicketPrice}");
                                         }
+                                        WriteCentered("");
+                                    }
                                 }
 
                                 Console.WriteLine();
@@ -1027,6 +1437,16 @@ namespace BookMyShow.Implementations
                                 string scno = ReadCentered("Enter screen number:");
                                 if(scno == "EXIT" || string.IsNullOrEmpty(scno)) { goto CustomerMenu; }
                                 int screenno = int.Parse(scno);
+
+                                Screen? selectedScreen = chosentheatre.Screens.Find(s => s.ScreenNumber == screenno);
+
+                                if (selectedScreen == null || !selectedScreen.Shows.Any(sh => sh.ShowDate.Equals(showDate.ToString("dd/MM/yyyy"))))
+                                {
+                                    WriteCentered("No shows available on the selected screen. Please select a different screen.");
+                                    ReadCentered("Press any key to retry:");
+                                    goto CustomerMenu;
+                                }
+
                                 string chosenshowtime = ReadCentered("Enter show time (HH:MM AM/PM):");
                                 if (chosenshowtime == "EXIT" || string.IsNullOrEmpty(chosenshowtime)) { goto CustomerMenu; }
 
@@ -1044,7 +1464,7 @@ namespace BookMyShow.Implementations
                                     throw new InvalidShowtimeException("Invalid movie, show time, or show date selection.");
                                 }
 
-                                BookingSystem.DisplaySeats(chosenshow);
+                                BookingSystem.DisplaySeats(chosenshow, screenno);
                                 string noseats = ReadCentered("Enter number of seats to book:");
                                 if (noseats == "EXIT" || string.IsNullOrEmpty(noseats)) { goto CustomerMenu; }
                                 if (!int.TryParse(noseats, out int nos) || nos <= 0)
@@ -1069,12 +1489,15 @@ namespace BookMyShow.Implementations
                                 }
                                 if(BookingSystem.BookTicket(customer, chosenshow,screenno, seatnumbers))
                                 {
-                                    BookingSystem.DisplaySeats(chosenshow);
+                                    BookingSystem.DisplaySeats(chosenshow,screenno);
                                     ReadCentered("Press any key for customer menu:");
+                                    seatnumbers.Clear();
                                 }
                                 else
                                 {
-                                    BookingSystem.DisplaySeats(chosenshow);
+                                    BookingSystem.DisplaySeats(chosenshow, screenno);
+                                    ReadCentered("Press any key for customer menu:");
+                                    seatnumbers.Clear();
                                     goto CustomerMenu;
                                 }
                             }

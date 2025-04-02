@@ -93,6 +93,7 @@ namespace BookMyShow.Implementations
                         owner.OwnedTheatre = null;
                     }
                 }
+                WriteCentered($"Theatre is successfully removed!");
             }
             catch (Exception ex)
             {

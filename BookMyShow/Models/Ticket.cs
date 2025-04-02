@@ -41,7 +41,13 @@ namespace BookMyShow.Models
             WriteCentered($"  Screen No : {ScreenNo}");
             WriteCentered($"  Show Date : {ShowDate}");
             WriteCentered($"  Show Time : {ShowTime}");
-            WriteCentered($"  Seat(s)   : {string.Join(",", SeatNo)}");
+            //WriteCentered($"  Seat(s)   : {string.Join(",", SeatNo)}");
+            //WriteCentered($"  Seat(s)   : {SeatNo}");
+            WriteCentered("  Seat(s)   :");
+            foreach (var seat in SeatNo)
+            {
+                WriteCentered($"    {seat}");
+            }
             WriteCentered($"  Theatre   : {TheatreName}, {theatre.Street}");
             WriteCentered($"  Price     : Rs {Price} (Includes GST)");
             WriteCentered("***************************************************");
